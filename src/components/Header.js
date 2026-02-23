@@ -1,9 +1,18 @@
 import { Navbar, Container, Button, Image } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function Header() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
   return (
     <Navbar bg="light" expand="lg" className="mb-4 border-bottom">
-      {/* Use regular Container to match page content padding */}
       <Container className="d-flex align-items-center">
 
         {/* Left: Logo + Title */}
@@ -18,9 +27,20 @@ export default function Header() {
           <Navbar.Brand className="fw-bold fs-4">JobSearch</Navbar.Brand>
         </div>
 
-        {/* Right: Login Button */}
-        <div className="ms-auto">
-          <Button variant="primary">Login</Button>
+        {/* Right: user info or login */}
+        <div className="ms-auto d-flex align-items-center gap-3">
+          {user ? (
+            <>
+              <span className="text-muted small">{user.username}</span>
+              <Button variant="outline-secondary" size="sm" onClick={handleLogout}>
+                Logout
+              </Button>
+            </>
+          ) : (
+            <Button variant="primary" size="sm" onClick={() => navigate("/login")}>
+              Login
+            </Button>
+          )}
         </div>
 
       </Container>

@@ -1,39 +1,42 @@
 import { useState, useEffect, useRef } from "react";
 import { Button, Container } from "react-bootstrap";
+import { useApi } from "../hooks/useApi";
 import "../DataTable.css";
+
+const COLUMNS = [
+  "Date", "Role", "Company", "Source Link", "Company Link",
+  "Resume", "Cover Letter", "Status",
+  "Recruiter", "Hiring Mgr", "Panel", "HR", "Comments",
+];
+
+const linkFields = ["Source Link", "Company Link"];
+const checkboxFields = ["Resume", "Cover Letter"];
+const dropdownFields = ["Status"];
+const statusOptions = ["Applied", "Interviewing", "Offer", "Rejected", "Ghosted"];
 
 export default function DataTable() {
   const [rows, setRows] = useState([]);
-  const [columns, setColumns] = useState([]);
-  const [colWidths, setColWidths] = useState({});
+  const [colWidths, setColWidths] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("sheetColWidths")) || {};
+    } catch {
+      return {};
+    }
+  });
   const [dateErrors, setDateErrors] = useState({});
   const [editingCell, setEditingCell] = useState(null);
   const gridRef = useRef(null);
-
   const newRowFocusRef = useRef(null);
+  const { request } = useApi();
 
-  // Fields that behave as hyperlinks
-  const linkFields = ["Source Link", "Company Link"];
-
-  // Fields that behave as checkboxes
-  const checkboxFields = ["Resume", "Cover Letter"];
-
-  // Fields that behave as dropdowns
-  const dropdownFields = ["Status"];
-
-  // Dropdown options (later editable by admin UI)
-  const statusOptions = ["Applied", "Interviewing", "Offer", "Rejected", "Ghosted"];
-
-  // SMART DATE PARSER — formats ONLY when complete or on blur
+  // SMART DATE PARSER
   const formatDate = (value) => {
     if (!value) return "";
-
     const cleaned = value.replace(/-/g, "/").trim();
     const parts = cleaned.split("/").map(p => p.trim());
     const currentYear = new Date().getFullYear();
 
     if (/^\d{2}\/\d{2}\/\d{4}$/.test(cleaned)) return cleaned;
-
     if (parts.length < 2) return null;
     if (parts.length === 2 && cleaned.endsWith("/")) return null;
     if (parts.some(p => p === "")) return null;
@@ -41,127 +44,82 @@ export default function DataTable() {
     if (parts.length === 2) {
       const [m, d] = parts;
       if (isNaN(m) || isNaN(d)) return null;
-
       const month = parseInt(m, 10);
       const day = parseInt(d, 10);
-
       if (month < 1 || month > 12) return null;
       if (day < 1 || day > 31) return null;
-
       return `${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")}/${currentYear}`;
     }
 
     if (parts.length === 3) {
       let [m, d, y] = parts;
-
       if (isNaN(m) || isNaN(d) || isNaN(y)) return null;
-
       const month = parseInt(m, 10);
       const day = parseInt(d, 10);
-
       if (month < 1 || month > 12) return null;
       if (day < 1 || day > 31) return null;
-
       if (y.length === 2) {
         const yy = parseInt(y, 10);
         y = yy < 50 ? 2000 + yy : 1900 + yy;
       }
-
       const year = parseInt(y, 10);
-
       return `${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")}/${year}`;
     }
 
     return null;
   };
 
-  // Load JSON only when needed, never overwrite user data
+  // Load rows from API on mount
   useEffect(() => {
-    const storedWidths = localStorage.getItem("sheetColWidths");
-    if (storedWidths) setColWidths(JSON.parse(storedWidths));
-
-    fetch("/data/initialData.json")
+    request("/api/jobs")
       .then(res => res.json())
-      .then(jsonData => {
-        jsonData = jsonData.map(row => ({
-          ...row,
-          Date: formatDate(row.Date) || row.Date
-        }));
+      .then(data => setRows(data))
+      .catch(err => console.error("Failed to load jobs:", err));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-        const jsonCols = Object.keys(jsonData[0]).filter(k => k !== "id");
-        const stored = localStorage.getItem("sheetData");
-
-        if (!stored) {
-          setColumns(jsonCols);
-          setRows(jsonData);
-          localStorage.setItem("sheetData", JSON.stringify(jsonData));
-          return;
-        }
-
-        const storedData = JSON.parse(stored);
-        const storedCols = Object.keys(storedData[0]).filter(k => k !== "id");
-
-        const schemaChanged =
-          JSON.stringify(jsonCols) !== JSON.stringify(storedCols);
-
-        if (schemaChanged) {
-          setColumns(jsonCols);
-          setRows(jsonData);
-          localStorage.setItem("sheetData", JSON.stringify(jsonData));
-          return;
-        }
-
-        setColumns(storedCols);
-        setRows(storedData);
+  const updateCell = async (id, field, value) => {
+    // Optimistic update
+    setRows(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r));
+    try {
+      await request(`/api/jobs/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ [field]: value }),
       });
-  }, []);
-
-  const saveImmediately = (newRows) => {
-    localStorage.setItem("sheetData", JSON.stringify(newRows));
+    } catch (err) {
+      console.error("Failed to update cell:", err);
+    }
   };
 
-  const updateCell = (id, field, value) => {
-    const updated = rows.map(r =>
-      r.id === id ? { ...r, [field]: value } : r
-    );
-    setRows(updated);
-    saveImmediately(updated);
-  };
-
-  const handleDateBlur = (id, value) => {
+  const handleDateBlur = async (id, value) => {
     const formatted = formatDate(value);
-
-    const updated = rows.map(r => {
-      if (r.id !== id) return r;
-
-      if (formatted === null) {
-        setDateErrors(prev => ({ ...prev, [id]: true }));
-        return { ...r, Date: value };
-      }
-
-      setDateErrors(prev => ({ ...prev, [id]: false }));
-      return { ...r, Date: formatted };
-    });
-
-    setRows(updated);
-    saveImmediately(updated);
+    if (formatted === null) {
+      setDateErrors(prev => ({ ...prev, [id]: true }));
+      setRows(prev => prev.map(r => r.id === id ? { ...r, Date: value } : r));
+      return;
+    }
+    setDateErrors(prev => ({ ...prev, [id]: false }));
+    await updateCell(id, "Date", formatted);
   };
 
-  const addRow = () => {
-    const newId = Date.now();
-    const newRow = { id: newId };
-
-    columns.forEach(col => {
+  const addRow = async () => {
+    const newRow = {};
+    COLUMNS.forEach(col => {
       if (checkboxFields.includes(col)) newRow[col] = false;
       else if (dropdownFields.includes(col)) newRow[col] = statusOptions[0];
       else newRow[col] = "";
     });
 
-    newRowFocusRef.current = newId;
-
-    const updated = [...rows, newRow];
-    setRows(updated);
-    saveImmediately(updated);
+    try {
+      const res = await request("/api/jobs", {
+        method: "POST",
+        body: JSON.stringify(newRow),
+      });
+      const created = await res.json();
+      newRowFocusRef.current = created.id;
+      setRows(prev => [...prev, created]);
+    } catch (err) {
+      console.error("Failed to add row:", err);
+    }
   };
 
   useEffect(() => {
@@ -175,25 +133,24 @@ export default function DataTable() {
     }
   }, [rows]);
 
-  const deleteRow = id => {
-    const updated = rows.filter(r => r.id !== id);
-    setRows(updated);
-    saveImmediately(updated);
+  const deleteRow = async (id) => {
+    setRows(prev => prev.filter(r => r.id !== id));
+    try {
+      await request(`/api/jobs/${id}`, { method: "DELETE" });
+    } catch (err) {
+      console.error("Failed to delete row:", err);
+    }
   };
 
-  // NEW: Download data as JSON
   const downloadData = () => {
     const blob = new Blob([JSON.stringify(rows, null, 2)], {
       type: "application/json",
     });
-
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-
     a.href = url;
     a.download = "job-tracker-data.json";
     a.click();
-
     URL.revokeObjectURL(url);
   };
 
@@ -218,7 +175,6 @@ export default function DataTable() {
     window.addEventListener("mouseup", onMouseUp);
   };
 
-  // Render a cell (checkbox, dropdown, hyperlink, or text)
   const renderCell = (row, col) => {
     const value = row[col];
     const isLink = linkFields.includes(col);
@@ -226,18 +182,9 @@ export default function DataTable() {
     const isDropdown = dropdownFields.includes(col);
     const isEditing = editingCell?.row === row.id && editingCell?.col === col;
 
-    // CHECKBOX FIELD — centered
     if (isCheckbox) {
       return (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "100%",
-            width: "100%"
-          }}
-        >
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%", width: "100%" }}>
           <input
             type="checkbox"
             checked={!!value}
@@ -247,7 +194,6 @@ export default function DataTable() {
       );
     }
 
-    // DROPDOWN FIELD
     if (isDropdown) {
       return (
         <select
@@ -263,7 +209,6 @@ export default function DataTable() {
       );
     }
 
-    // HYPERLINK FIELD
     if (isLink && !isEditing && value && value.startsWith("http")) {
       return (
         <div className="sheet-link">
@@ -281,13 +226,12 @@ export default function DataTable() {
       );
     }
 
-    // NORMAL TEXT FIELD
     return (
       <input
         className="sheet-input"
         data-row={row.id}
         data-field={col}
-        value={value}
+        value={value ?? ""}
         onChange={e => updateCell(row.id, col, e.target.value)}
         onBlur={col === "Date"
           ? e => handleDateBlur(row.id, e.target.value)
@@ -295,7 +239,7 @@ export default function DataTable() {
         onDoubleClick={() => setEditingCell({ row: row.id, col })}
         style={{
           border: col === "Date" && dateErrors[row.id] ? "2px solid red" : "none",
-          background: col === "Date" && dateErrors[row.id] ? "#ffe3e3" : "transparent"
+          background: col === "Date" && dateErrors[row.id] ? "#ffe3e3" : "transparent",
         }}
       />
     );
@@ -303,26 +247,17 @@ export default function DataTable() {
 
   return (
     <Container fluid className="p-0">
-
       <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
         <Button onClick={addRow}>Add Row</Button>
         <Button variant="secondary" onClick={downloadData}>Download Data</Button>
       </div>
 
       <div className="sheet-scroll" ref={gridRef}>
-
         <div className="sheet-grid sheet-header">
-          {columns.map(col => (
-            <div
-              key={col}
-              className="sheet-cell"
-              style={{ width: colWidths[col] || 150 }}
-            >
+          {COLUMNS.map(col => (
+            <div key={col} className="sheet-cell" style={{ width: colWidths[col] || 150 }}>
               {col}
-              <div
-                className="col-resizer"
-                onMouseDown={e => startResize(col, e)}
-              />
+              <div className="col-resizer" onMouseDown={e => startResize(col, e)} />
             </div>
           ))}
           <div className="sheet-cell" style={{ width: 100 }}></div>
@@ -330,30 +265,19 @@ export default function DataTable() {
 
         {rows.map(row => (
           <div key={row.id} className="sheet-grid">
-            {columns.map(col => (
+            {COLUMNS.map(col => (
               <div
                 key={col}
                 className="sheet-cell"
-                style={{
-                  width: colWidths[col] || 150,
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center"
-                }}
+                style={{ width: colWidths[col] || 150, display: "flex", justifyContent: "center", alignItems: "center" }}
                 onClick={() => setEditingCell({ row: row.id, col })}
               >
                 {renderCell(row, col)}
               </div>
             ))}
-
             <div className="sheet-cell" style={{ width: 100, textAlign: "center" }}>
               <span
-                style={{
-                  cursor: "pointer",
-                  fontSize: "18px",
-                  color: "#b00",
-                  userSelect: "none"
-                }}
+                style={{ cursor: "pointer", fontSize: "18px", color: "#b00", userSelect: "none" }}
                 onClick={() => deleteRow(row.id)}
                 title="Delete row"
               >
@@ -362,7 +286,6 @@ export default function DataTable() {
             </div>
           </div>
         ))}
-
       </div>
     </Container>
   );

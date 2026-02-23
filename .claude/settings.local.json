@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd C:/Development/github/react/jobsearch/server && npm install express better-sqlite3 bcryptjs jsonwebtoken dotenv cors 2>&1)",
+      "Bash(curl:*)",
+      "Bash(cd:*)",
+      "Bash(netstat -ano)",
+      "Bash(xargs -I{} taskkill /PID {} /F)",
+      "Bash(tail:*)",
+      "Bash(taskkill:*)",
+      "Bash(cmd:*)"
+    ]
+  }
+}
