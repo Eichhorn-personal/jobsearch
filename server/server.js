@@ -4,6 +4,7 @@ const cors = require("cors");
 
 const authRoutes = require("./routes/auth");
 const jobRoutes = require("./routes/jobs");
+const dropdownRoutes = require("./routes/dropdowns");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -14,6 +15,7 @@ app.use(express.json());
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/jobs", jobRoutes);
+app.use("/api/dropdowns", dropdownRoutes);
 
 // Generic error handler
 app.use((err, _req, res, _next) => {

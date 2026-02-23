@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import Header from "./components/Header";
 import DataTable from "./components/DataTable";
 import LoginPage from "./pages/LoginPage";
+import AdminPage from "./pages/AdminPage";
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
@@ -31,6 +32,17 @@ export default function App() {
           element={
             <ProtectedRoute>
               <AppLayout />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <>
+                <Header />
+                <AdminPage />
+              </>
             </ProtectedRoute>
           }
         />

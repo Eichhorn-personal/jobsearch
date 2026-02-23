@@ -12,7 +12,6 @@ const COLUMNS = [
 const linkFields = ["Source Link", "Company Link"];
 const checkboxFields = ["Resume", "Cover Letter"];
 const dropdownFields = ["Status"];
-const statusOptions = ["Applied", "Interviewing", "Offer", "Rejected", "Ghosted"];
 
 export default function DataTable() {
   const [rows, setRows] = useState([]);
@@ -23,6 +22,7 @@ export default function DataTable() {
       return {};
     }
   });
+  const [dropdownOptions, setDropdownOptions] = useState({});
   const [dateErrors, setDateErrors] = useState({});
   const [editingCell, setEditingCell] = useState(null);
   const gridRef = useRef(null);
@@ -69,12 +69,23 @@ export default function DataTable() {
     return null;
   };
 
-  // Load rows from API on mount
+  // Load rows + dropdown options from API on mount — independently so one failure can't blank the other
   useEffect(() => {
     request("/api/jobs")
       .then(res => res.json())
       .then(data => setRows(data))
       .catch(err => console.error("Failed to load jobs:", err));
+
+    request("/api/dropdowns")
+      .then(res => res.json())
+      .then(optionsData => {
+        const labels = {};
+        for (const [field, opts] of Object.entries(optionsData)) {
+          labels[field] = opts.map(o => o.label);
+        }
+        setDropdownOptions(labels);
+      })
+      .catch(err => console.error("Failed to load dropdown options:", err));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const updateCell = async (id, field, value) => {
@@ -105,7 +116,7 @@ export default function DataTable() {
     const newRow = {};
     COLUMNS.forEach(col => {
       if (checkboxFields.includes(col)) newRow[col] = false;
-      else if (dropdownFields.includes(col)) newRow[col] = statusOptions[0];
+      else if (dropdownFields.includes(col)) newRow[col] = (dropdownOptions[col] || [])[0] ?? "";
       else newRow[col] = "";
     });
 
@@ -202,7 +213,7 @@ export default function DataTable() {
           onChange={(e) => updateCell(row.id, col, e.target.value)}
           style={{ padding: "4px", width: "100%" }}
         >
-          {statusOptions.map(opt => (
+          {(dropdownOptions[col] || []).map(opt => (
             <option key={opt} value={opt}>{opt}</option>
           ))}
         </select>

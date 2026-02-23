@@ -32,6 +32,9 @@ export default function Header() {
           {user ? (
             <>
               <span className="text-muted small">{user.username}</span>
+              <Button variant="outline-secondary" size="sm" onClick={() => navigate("/admin")}>
+                ⚙ Manage
+              </Button>
               <Button variant="outline-secondary" size="sm" onClick={handleLogout}>
                 Logout
               </Button>

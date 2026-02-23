@@ -7,6 +7,15 @@ db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
 
 db.exec(`
+  CREATE TABLE IF NOT EXISTS dropdown_options (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    field_name TEXT NOT NULL,
+    label      TEXT NOT NULL,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(field_name, label)
+  );
+
   CREATE TABLE IF NOT EXISTS users (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     username   TEXT NOT NULL UNIQUE,
@@ -35,6 +44,15 @@ db.exec(`
     updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
   );
 `);
+
+// Seed default Status options if none exist yet
+const statusCount = db.prepare("SELECT COUNT(*) AS n FROM dropdown_options WHERE field_name = 'Status'").get().n;
+if (statusCount === 0) {
+  const insertOpt = db.prepare("INSERT INTO dropdown_options (field_name, label, sort_order) VALUES (?, ?, ?)");
+  ["Applied", "Interviewing", "Offer", "Rejected", "Ghosted"].forEach((label, i) => {
+    insertOpt.run("Status", label, i);
+  });
+}
 
 // Migration: add google_id column to existing databases
 const userCols = db.pragma("table_info(users)").map((c) => c.name);

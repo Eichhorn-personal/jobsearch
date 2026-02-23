@@ -9,11 +9,16 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const router = express.Router();
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 // POST /api/auth/register
 router.post("/register", (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
-    return res.status(400).json({ error: "username and password are required" });
+    return res.status(400).json({ error: "Email and password are required" });
+  }
+  if (!EMAIL_RE.test(username)) {
+    return res.status(400).json({ error: "Username must be a valid email address" });
   }
 
   const hash = bcrypt.hashSync(password, 10);
@@ -33,7 +38,10 @@ router.post("/register", (req, res) => {
 router.post("/login", (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
-    return res.status(400).json({ error: "username and password are required" });
+    return res.status(400).json({ error: "Email and password are required" });
+  }
+  if (!EMAIL_RE.test(username)) {
+    return res.status(400).json({ error: "Username must be a valid email address" });
   }
 
   const user = db.prepare("SELECT * FROM users WHERE username = ?").get(username);
