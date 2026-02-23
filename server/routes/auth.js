@@ -1,8 +1,11 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { OAuth2Client } = require("google-auth-library");
 const db = require("../db/database");
 const authenticate = require("../middleware/authenticate");
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const router = express.Router();
 
@@ -34,8 +37,64 @@ router.post("/login", (req, res) => {
   }
 
   const user = db.prepare("SELECT * FROM users WHERE username = ?").get(username);
-  if (!user || !bcrypt.compareSync(password, user.password)) {
+  if (!user || !user.password) {
     return res.status(401).json({ error: "Invalid credentials" });
+  }
+  if (user.google_id && !user.password) {
+    return res.status(400).json({ error: "This account uses Google Sign-In. Please use the Google button." });
+  }
+  if (!bcrypt.compareSync(password, user.password)) {
+    return res.status(401).json({ error: "Invalid credentials" });
+  }
+
+  const token = jwt.sign(
+    { sub: user.id, username: user.username },
+    process.env.JWT_SECRET,
+    { expiresIn: "8h" }
+  );
+
+  return res.json({ token, user: { id: user.id, username: user.username } });
+});
+
+// POST /api/auth/google
+router.post("/google", async (req, res) => {
+  const { credential } = req.body;
+  if (!credential) {
+    return res.status(400).json({ error: "Missing Google credential" });
+  }
+
+  let payload;
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    payload = ticket.getPayload();
+  } catch {
+    return res.status(401).json({ error: "Invalid Google token" });
+  }
+
+  const googleId = payload.sub;
+  const email = payload.email;
+
+  // 1. Already linked to this Google account
+  let user = db.prepare("SELECT * FROM users WHERE google_id = ?").get(googleId);
+
+  if (!user) {
+    // 2. Existing account with matching email username — link it
+    const byEmail = db.prepare("SELECT * FROM users WHERE username = ?").get(email);
+    if (byEmail) {
+      db.prepare("UPDATE users SET google_id = ? WHERE id = ?").run(googleId, byEmail.id);
+      user = db.prepare("SELECT * FROM users WHERE id = ?").get(byEmail.id);
+    }
+  }
+
+  if (!user) {
+    // 3. Brand-new user — create one
+    const result = db
+      .prepare("INSERT INTO users (username, password, google_id) VALUES (?, ?, ?)")
+      .run(email, "", googleId);
+    user = db.prepare("SELECT * FROM users WHERE id = ?").get(result.lastInsertRowid);
   }
 
   const token = jwt.sign(

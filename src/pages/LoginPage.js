@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, Form, Button, Alert, Container } from "react-bootstrap";
+import { GoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../context/AuthContext";
 
 export default function LoginPage() {
@@ -13,6 +14,33 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // --- Google Sign-In ---
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: credentialResponse.credential }),
+      });
+      if (!res.ok) {
+        let msg = "Google sign-in failed";
+        try { const d = await res.json(); msg = d.error || msg; } catch { /* ignore */ }
+        setError(msg);
+        return;
+      }
+      const data = await res.json();
+      login(data.token, data.user);
+      navigate("/");
+    } catch {
+      setError("Network error — is the server running?");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- Username/password ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -33,7 +61,6 @@ export default function LoginPage() {
           const data = await res.json();
           errorMsg = data.error || errorMsg;
         } catch {
-          // Response wasn't JSON (e.g. proxy couldn't reach the server)
           errorMsg = "Server unreachable — make sure the backend is running (npm run dev)";
         }
         setError(errorMsg);
@@ -86,6 +113,22 @@ export default function LoginPage() {
           </Card.Title>
 
           {error && <Alert variant="danger">{error}</Alert>}
+
+          {/* Google button */}
+          <div className="d-flex justify-content-center mb-3">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError("Google sign-in was cancelled or failed")}
+              useOneTap={false}
+              text={mode === "login" ? "signin_with" : "signup_with"}
+            />
+          </div>
+
+          <div className="d-flex align-items-center mb-3 text-muted small">
+            <hr className="flex-grow-1" />
+            <span className="mx-2">or</span>
+            <hr className="flex-grow-1" />
+          </div>
 
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-3">
