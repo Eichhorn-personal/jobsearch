@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Button, Container } from "react-bootstrap";
+import { Button, Container, Modal } from "react-bootstrap";
 import { useApi } from "../hooks/useApi";
 import AddJobModal from "./AddJobModal";
 import "../DataTable.css";
@@ -18,6 +18,7 @@ export default function DataTable() {
   const [dropdownOptions, setDropdownOptions] = useState({});
   const [showAddModal, setShowAddModal] = useState(false);
   const [viewingRow, setViewingRow] = useState(null);
+  const [confirmRow, setConfirmRow] = useState(null);
   const gridRef = useRef(null);
   const { request } = useApi();
 
@@ -126,6 +127,27 @@ export default function DataTable() {
         dropdownOptions={dropdownOptions}
       />
 
+      <Modal show={!!confirmRow} onHide={() => setConfirmRow(null)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Delete Record?</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {confirmRow && (
+            <p className="mb-0">
+              Are you sure you want to delete this record?
+              <br />
+              <span className="text-muted small">
+                {[confirmRow.Date, confirmRow.Role, confirmRow.Company].filter(Boolean).join(" · ")}
+              </span>
+            </p>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setConfirmRow(null)}>Cancel</Button>
+          <Button variant="danger" onClick={() => { deleteRow(confirmRow.id); setConfirmRow(null); }}>Delete</Button>
+        </Modal.Footer>
+      </Modal>
+
       <div className="sheet-scroll" ref={gridRef}>
         <div className="sheet-grid sheet-header">
           <div className="sheet-cell" style={{ width: 64 }}></div>
@@ -148,10 +170,7 @@ export default function DataTable() {
               <span
                 style={{ cursor: "pointer", fontSize: "15px", userSelect: "none", opacity: 0.6 }}
                 title="Delete"
-                onClick={() => {
-                  if (window.confirm(`Delete this record?\n\n${[row.Date, row.Role, row.Company].filter(Boolean).join(" · ")}`))
-                    deleteRow(row.id);
-                }}
+                onClick={() => setConfirmRow(row)}
               >🗑️</span>
             </div>
             {COLUMNS.map(col => (
