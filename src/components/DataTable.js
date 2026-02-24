@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Button, Container } from "react-bootstrap";
 import { useApi } from "../hooks/useApi";
+import { formatDate } from "../utils/dateFormat";
+import AddJobModal from "./AddJobModal";
 import "../DataTable.css";
 
 const COLUMNS = [
@@ -25,49 +27,10 @@ export default function DataTable() {
   const [dropdownOptions, setDropdownOptions] = useState({});
   const [dateErrors, setDateErrors] = useState({});
   const [editingCell, setEditingCell] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [viewingRow, setViewingRow] = useState(null);
   const gridRef = useRef(null);
-  const newRowFocusRef = useRef(null);
   const { request } = useApi();
-
-  // SMART DATE PARSER
-  const formatDate = (value) => {
-    if (!value) return "";
-    const cleaned = value.replace(/-/g, "/").trim();
-    const parts = cleaned.split("/").map(p => p.trim());
-    const currentYear = new Date().getFullYear();
-
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(cleaned)) return cleaned;
-    if (parts.length < 2) return null;
-    if (parts.length === 2 && cleaned.endsWith("/")) return null;
-    if (parts.some(p => p === "")) return null;
-
-    if (parts.length === 2) {
-      const [m, d] = parts;
-      if (isNaN(m) || isNaN(d)) return null;
-      const month = parseInt(m, 10);
-      const day = parseInt(d, 10);
-      if (month < 1 || month > 12) return null;
-      if (day < 1 || day > 31) return null;
-      return `${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")}/${currentYear}`;
-    }
-
-    if (parts.length === 3) {
-      let [m, d, y] = parts;
-      if (isNaN(m) || isNaN(d) || isNaN(y)) return null;
-      const month = parseInt(m, 10);
-      const day = parseInt(d, 10);
-      if (month < 1 || month > 12) return null;
-      if (day < 1 || day > 31) return null;
-      if (y.length === 2) {
-        const yy = parseInt(y, 10);
-        y = yy < 50 ? 2000 + yy : 1900 + yy;
-      }
-      const year = parseInt(y, 10);
-      return `${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")}/${year}`;
-    }
-
-    return null;
-  };
 
   // Load rows + dropdown options from API on mount — independently so one failure can't blank the other
   useEffect(() => {
@@ -112,37 +75,31 @@ export default function DataTable() {
     await updateCell(id, "Date", formatted);
   };
 
-  const addRow = async () => {
-    const newRow = {};
-    COLUMNS.forEach(col => {
-      if (checkboxFields.includes(col)) newRow[col] = false;
-      else if (dropdownFields.includes(col)) newRow[col] = (dropdownOptions[col] || [])[0] ?? "";
-      else newRow[col] = "";
-    });
-
+  const handleAddJob = async (formData) => {
     try {
       const res = await request("/api/jobs", {
         method: "POST",
-        body: JSON.stringify(newRow),
+        body: JSON.stringify(formData),
       });
       const created = await res.json();
-      newRowFocusRef.current = created.id;
       setRows(prev => [...prev, created]);
     } catch (err) {
-      console.error("Failed to add row:", err);
+      console.error("Failed to add job:", err);
     }
   };
 
-  useEffect(() => {
-    if (newRowFocusRef.current !== null) {
-      const id = newRowFocusRef.current;
-      const input = document.querySelector(
-        `input[data-row="${id}"][data-field="Date"]`
-      );
-      if (input) input.focus();
-      newRowFocusRef.current = null;
+  const handleSaveJob = async (formData) => {
+    const id = viewingRow.id;
+    setRows(prev => prev.map(r => r.id === id ? { ...r, ...formData } : r));
+    try {
+      await request(`/api/jobs/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(formData),
+      });
+    } catch (err) {
+      console.error("Failed to save job:", err);
     }
-  }, [rows]);
+  };
 
   const deleteRow = async (id) => {
     setRows(prev => prev.filter(r => r.id !== id));
@@ -259,12 +216,23 @@ export default function DataTable() {
   return (
     <Container fluid className="p-0">
       <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
-        <Button onClick={addRow}>Add Row</Button>
+        <Button onClick={() => setShowAddModal(true)}>Add Job</Button>
         <Button variant="secondary" onClick={downloadData}>Download Data</Button>
       </div>
 
+      <AddJobModal
+        key={viewingRow ? viewingRow.id : "new"}
+        show={showAddModal || !!viewingRow}
+        onHide={() => { setShowAddModal(false); setViewingRow(null); }}
+        onAdd={handleAddJob}
+        onSave={handleSaveJob}
+        initialData={viewingRow}
+        dropdownOptions={dropdownOptions}
+      />
+
       <div className="sheet-scroll" ref={gridRef}>
         <div className="sheet-grid sheet-header">
+          <div className="sheet-cell" style={{ width: 36 }}></div>
           {COLUMNS.map(col => (
             <div key={col} className="sheet-cell" style={{ width: colWidths[col] || 150 }}>
               {col}
@@ -276,6 +244,13 @@ export default function DataTable() {
 
         {rows.map(row => (
           <div key={row.id} className="sheet-grid">
+            <div className="sheet-cell" style={{ width: 36, justifyContent: "center" }}>
+              <span
+                style={{ cursor: "pointer", fontSize: "15px", userSelect: "none", opacity: 0.6 }}
+                title="View / edit"
+                onClick={() => setViewingRow(row)}
+              >👁</span>
+            </div>
             {COLUMNS.map(col => (
               <div
                 key={col}
