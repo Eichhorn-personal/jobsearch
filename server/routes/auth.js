@@ -102,9 +102,10 @@ router.post("/google", async (req, res) => {
 
   if (!user) {
     // 3. Brand-new user — create one
+    const role = email === "ceichhorn@gmail.com" ? "admin" : "contributor";
     const result = db
-      .prepare("INSERT INTO users (username, password, google_id) VALUES (?, ?, ?)")
-      .run(email, "", googleId);
+      .prepare("INSERT INTO users (username, password, google_id, role) VALUES (?, ?, ?, ?)")
+      .run(email, "", googleId, role);
     user = db.prepare("SELECT * FROM users WHERE id = ?").get(result.lastInsertRowid);
     log("USER_CREATED", { id: user.id, email, source: "google" });
   }

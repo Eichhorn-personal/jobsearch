@@ -67,7 +67,9 @@ if (!userCols.includes("google_id")) {
 // Migration: add role column to existing databases
 if (!userCols.includes("role")) {
   db.exec("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'contributor'");
-  db.prepare("UPDATE users SET role = 'admin' WHERE username = ?").run("ceichhorn@gmail.com");
 }
+
+// Always ensure designated admin has admin role (handles fresh DBs where user didn't exist at migration time)
+db.prepare("UPDATE users SET role = 'admin' WHERE username = ?").run("ceichhorn@gmail.com");
 
 module.exports = db;
