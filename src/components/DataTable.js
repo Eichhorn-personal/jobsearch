@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Button, Container, Modal } from "react-bootstrap";
 import { useApi } from "../hooks/useApi";
 import AddJobModal from "./AddJobModal";
@@ -6,20 +6,20 @@ import "../DataTable.css";
 
 const COLUMNS = ["Date", "Role", "Company", "Status"];
 
+// Fixed px width for constrained columns; flex for fluid ones
+const COL_STYLE = {
+  Date:    { width: 100,  flexShrink: 0 },
+  Role:    { flex: 1,     minWidth: 80 },
+  Company: { flex: 1,     minWidth: 80 },
+  Status:  { width: 130,  flexShrink: 0 },
+};
+
 export default function DataTable() {
   const [rows, setRows] = useState([]);
-  const [colWidths, setColWidths] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem("sheetColWidths")) || {};
-    } catch {
-      return {};
-    }
-  });
   const [dropdownOptions, setDropdownOptions] = useState({});
   const [showAddModal, setShowAddModal] = useState(false);
   const [viewingRow, setViewingRow] = useState(null);
   const [confirmRow, setConfirmRow] = useState(null);
-  const gridRef = useRef(null);
   const { request } = useApi();
 
   // Load rows + dropdown options from API on mount — independently so one failure can't blank the other
@@ -76,28 +76,6 @@ export default function DataTable() {
     }
   };
 
-  const startResize = (col, e) => {
-    e.preventDefault();
-    const startX = e.clientX;
-    const startWidth = colWidths[col] || 150;
-
-    const onMouseMove = moveEvent => {
-      const newWidth = Math.max(80, startWidth + (moveEvent.clientX - startX));
-      const updated = { ...colWidths, [col]: newWidth };
-      setColWidths(updated);
-      localStorage.setItem("sheetColWidths", JSON.stringify(updated));
-    };
-
-    const onMouseUp = () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
-    };
-
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
-  };
-
-
   return (
     <Container fluid className="p-0">
       <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
@@ -135,20 +113,19 @@ export default function DataTable() {
         </Modal.Footer>
       </Modal>
 
-      <div className="sheet-scroll" ref={gridRef}>
+      <div className="sheet-scroll">
         <div className="sheet-grid sheet-header">
-          <div className="sheet-cell" style={{ width: 64 }}></div>
+          <div className="sheet-cell" style={{ width: 56, flexShrink: 0 }}></div>
           {COLUMNS.map(col => (
-            <div key={col} className="sheet-cell" style={{ width: colWidths[col] || 150 }}>
+            <div key={col} className="sheet-cell" style={COL_STYLE[col]}>
               {col}
-              <div className="col-resizer" onMouseDown={e => startResize(col, e)} />
             </div>
           ))}
         </div>
 
         {rows.map(row => (
           <div key={row.id} className="sheet-grid">
-            <div className="sheet-cell" style={{ width: 64, justifyContent: "center", gap: 6, display: "flex" }}>
+            <div className="sheet-cell" style={{ width: 56, flexShrink: 0, justifyContent: "center", gap: 6, display: "flex" }}>
               <span
                 style={{ cursor: "pointer", fontSize: "15px", userSelect: "none", opacity: 0.6 }}
                 title="View / edit"
@@ -161,12 +138,10 @@ export default function DataTable() {
               >🗑️</span>
             </div>
             {COLUMNS.map(col => (
-              <div
-                key={col}
-                className="sheet-cell"
-                style={{ width: colWidths[col] || 150 }}
-              >
-                <span style={{ padding: "4px 6px" }}>{row[col] ?? ""}</span>
+              <div key={col} className="sheet-cell" style={COL_STYLE[col]}>
+                <span style={{ padding: "4px 6px", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {row[col] ?? ""}
+                </span>
               </div>
             ))}
           </div>

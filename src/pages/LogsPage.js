@@ -16,23 +16,14 @@ function formatTimestamp(ts) {
   return new Date(ts).toLocaleString();
 }
 
-function EntryDetails({ event, data }) {
-  if (event === "USER_CREATED") {
-    return <>{data.email} &nbsp;<span className="text-muted small">id={data.id} source={data.source}</span></>;
-  }
-  if (event === "USER_LOGIN") {
-    return <>{data.email} &nbsp;<span className="text-muted small">source={data.source}</span></>;
-  }
-  if (event === "USER_LOGOUT") {
-    return <>{data.email}</>;
-  }
-  const parts = [];
-  if (data.role)    parts.push(data.role);
-  if (data.company) parts.push(data.company);
+function EntryDetails({ data }) {
   return (
     <>
-      {parts.join(" · ")}
-      &nbsp;<span className="text-muted small">job_id={data.id} email={data.email}</span>
+      {Object.entries(data)
+        .filter(([k]) => k !== "id")
+        .map(([k, v]) => (
+          <span key={k} className="me-3">{k}={String(v)}</span>
+        ))}
     </>
   );
 }
@@ -78,13 +69,13 @@ export default function LogsPage() {
             {entries.map((e, i) => (
               <tr key={i}>
                 <td className="text-muted small">{formatTimestamp(e.timestamp)}</td>
-                <td>
+                <td className="small">
                   <Badge bg={EVENT_VARIANT[e.event] || "secondary"}>
                     {e.event}
                   </Badge>
                 </td>
                 <td className="small">
-                  <EntryDetails event={e.event} data={e.data} />
+                  <EntryDetails data={e.data} />
                 </td>
               </tr>
             ))}

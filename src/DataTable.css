@@ -1,14 +1,14 @@
 /* Horizontal scroll container */
 .sheet-scroll {
-  overflow-x: auto;
+  overflow-x: hidden;
   overflow-y: hidden;
   border: 1px solid #ced4da;
 }
 
 /* Each row (header + data) */
 .sheet-grid {
-  display: flex;              /* rows stack vertically */
-  width: max-content;         /* grid becomes wider than screen */
+  display: flex;
+  width: 100%;
   min-height: 36px;
   border-bottom: 1px solid #ced4da;
 }
@@ -27,6 +27,8 @@
   display: flex;
   align-items: center;
   position: relative;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .sheet-cell:last-child {
