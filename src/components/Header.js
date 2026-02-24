@@ -12,7 +12,7 @@ export default function Header() {
   };
 
   return (
-    <Navbar bg="light" expand="lg" className="mb-4 border-bottom">
+    <Navbar expand="lg" className="mb-4 border-bottom bg-body-tertiary">
       <Container className="d-flex align-items-center">
 
         {/* Left: Logo + Title */}
