@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 const db = require("../db/database");
 const authenticate = require("../middleware/authenticate");
+const { log } = require("../logger");
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -25,6 +26,7 @@ router.post("/register", (req, res) => {
   try {
     const stmt = db.prepare("INSERT INTO users (username, password) VALUES (?, ?)");
     const result = stmt.run(username, hash);
+    log("USER_CREATED", { id: result.lastInsertRowid, email: username, source: "password" });
     return res.status(201).json({ id: result.lastInsertRowid, username });
   } catch (err) {
     if (err.message.includes("UNIQUE")) {
@@ -103,6 +105,7 @@ router.post("/google", async (req, res) => {
       .prepare("INSERT INTO users (username, password, google_id) VALUES (?, ?, ?)")
       .run(email, "", googleId);
     user = db.prepare("SELECT * FROM users WHERE id = ?").get(result.lastInsertRowid);
+    log("USER_CREATED", { id: user.id, email, source: "google" });
   }
 
   const token = jwt.sign(
