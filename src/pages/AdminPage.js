@@ -205,20 +205,22 @@ export default function AdminPage() {
                 ) : (
                   <>
                     <span className="flex-grow-1">{opt.label}</span>
-                    <div className="d-flex gap-2">
+                    <div className="d-flex gap-1">
                       <Button
                         size="sm"
                         variant="outline-secondary"
+                        title="Edit"
                         onClick={() => { setEditingId(opt.id); setEditValue(opt.label); }}
                       >
-                        Edit
+                        ✏️
                       </Button>
                       <Button
                         size="sm"
                         variant="outline-danger"
+                        title="Delete"
                         onClick={() => deleteOption(opt.id, fieldName)}
                       >
-                        Delete
+                        🗑️
                       </Button>
                     </div>
                   </>
