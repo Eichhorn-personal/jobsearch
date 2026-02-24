@@ -6,6 +6,7 @@ const authRoutes = require("./routes/auth");
 const jobRoutes = require("./routes/jobs");
 const dropdownRoutes = require("./routes/dropdowns");
 const logRoutes = require("./routes/logs");
+const userRoutes = require("./routes/users");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -24,6 +25,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/dropdowns", dropdownRoutes);
 app.use("/api/logs", logRoutes);
+app.use("/api/users", userRoutes);
 
 // Generic error handler
 app.use((err, _req, res, _next) => {

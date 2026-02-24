@@ -1,13 +1,41 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Container, Card, Button, Form, InputGroup, Badge, Spinner,
+  Container, Card, Button, Form, InputGroup, Badge, Spinner, Table,
 } from "react-bootstrap";
 import { useApi } from "../hooks/useApi";
+import { useAuth } from "../context/AuthContext";
 
 export default function AdminPage() {
   const { request } = useApi();
+  const { user } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user && user.role !== "admin") navigate("/");
+  }, [user, navigate]);
+
+  const [users, setUsers] = useState(null);
+
+  const loadUsers = useCallback(() => {
+    request("/api/users")
+      .then((res) => res.json())
+      .then(setUsers)
+      .catch(console.error);
+  }, [request]);
+
+  useEffect(() => { loadUsers(); }, [loadUsers]);
+
+  const handleRoleChange = async (userId, role) => {
+    const res = await request(`/api/users/${userId}/role`, {
+      method: "PUT",
+      body: JSON.stringify({ role }),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+    }
+  };
 
   // { "Status": [{ id, label, sort_order }, ...], ... }
   const [dropdowns, setDropdowns] = useState(null);
@@ -165,6 +193,42 @@ export default function AdminPage() {
           Download Data
         </Button>
       </div>
+
+      {/* Users */}
+      <Card className="mb-4 shadow-sm">
+        <Card.Header className="fw-semibold">Users</Card.Header>
+        <Card.Body className="p-0">
+          {users === null ? (
+            <div className="text-center p-3"><Spinner animation="border" size="sm" /></div>
+          ) : (
+            <Table size="sm" className="mb-0 align-middle">
+              <thead className="table-light">
+                <tr>
+                  <th className="px-3">Email</th>
+                  <th className="px-3" style={{ width: 160 }}>Role</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((u) => (
+                  <tr key={u.id}>
+                    <td className="px-3 small">{u.username}</td>
+                    <td className="px-3">
+                      <Form.Select
+                        size="sm"
+                        value={u.role}
+                        onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                      >
+                        <option value="contributor">contributor</option>
+                        <option value="admin">admin</option>
+                      </Form.Select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          )}
+        </Card.Body>
+      </Card>
 
       {/* One card per field */}
       {Object.entries(dropdowns).map(([fieldName, options]) => (

@@ -1,0 +1,38 @@
+const express = require("express");
+const db = require("../db/database");
+const authenticate = require("../middleware/authenticate");
+
+const router = express.Router();
+router.use(authenticate);
+
+// Admin-only guard
+router.use((req, res, next) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Forbidden" });
+  next();
+});
+
+// GET /api/users
+router.get("/", (req, res) => {
+  const users = db
+    .prepare("SELECT id, username, role, created_at FROM users ORDER BY created_at ASC")
+    .all();
+  return res.json(users);
+});
+
+// PUT /api/users/:id/role
+router.put("/:id/role", (req, res) => {
+  const { role } = req.body;
+  if (!["admin", "contributor"].includes(role)) {
+    return res.status(400).json({ error: "Role must be admin or contributor" });
+  }
+  const user = db.prepare("SELECT id FROM users WHERE id = ?").get(req.params.id);
+  if (!user) return res.status(404).json({ error: "User not found" });
+
+  db.prepare("UPDATE users SET role = ? WHERE id = ?").run(role, req.params.id);
+  const updated = db
+    .prepare("SELECT id, username, role, created_at FROM users WHERE id = ?")
+    .get(req.params.id);
+  return res.json(updated);
+});
+
+module.exports = router;

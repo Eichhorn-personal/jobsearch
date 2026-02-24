@@ -58,13 +58,13 @@ router.post("/login", (req, res) => {
   }
 
   const token = jwt.sign(
-    { sub: user.id, username: user.username },
+    { sub: user.id, username: user.username, role: user.role },
     process.env.JWT_SECRET,
     { expiresIn: "8h" }
   );
 
   log("USER_LOGIN", { email: user.username, source: "password" });
-  return res.json({ token, user: { id: user.id, username: user.username } });
+  return res.json({ token, user: { id: user.id, username: user.username, role: user.role } });
 });
 
 // POST /api/auth/google
@@ -110,13 +110,13 @@ router.post("/google", async (req, res) => {
   }
 
   const token = jwt.sign(
-    { sub: user.id, username: user.username },
+    { sub: user.id, username: user.username, role: user.role },
     process.env.JWT_SECRET,
     { expiresIn: "8h" }
   );
 
   log("USER_LOGIN", { email: user.username, source: "google" });
-  return res.json({ token, user: { id: user.id, username: user.username } });
+  return res.json({ token, user: { id: user.id, username: user.username, role: user.role } });
 });
 
 // POST /api/auth/logout
@@ -127,7 +127,7 @@ router.post("/logout", authenticate, (req, res) => {
 
 // GET /api/auth/me
 router.get("/me", authenticate, (req, res) => {
-  return res.json({ id: req.user.id, username: req.user.username });
+  return res.json({ id: req.user.id, username: req.user.username, role: req.user.role });
 });
 
 module.exports = router;

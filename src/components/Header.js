@@ -31,10 +31,14 @@ export default function Header() {
         <div className="ms-auto d-flex align-items-center">
           {user ? (
             <NavDropdown title={user.username} align="end" id="user-menu">
-              <NavDropdown.Item onClick={() => navigate("/admin")}>
-                ⚙ Manage
-              </NavDropdown.Item>
-              <NavDropdown.Divider />
+              {user.role === "admin" && (
+                <>
+                  <NavDropdown.Item onClick={() => navigate("/admin")}>
+                    ⚙ Manage
+                  </NavDropdown.Item>
+                  <NavDropdown.Divider />
+                </>
+              )}
               <NavDropdown.Item onClick={handleLogout}>
                 Logout
               </NavDropdown.Item>
