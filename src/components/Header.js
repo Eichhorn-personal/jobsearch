@@ -1,4 +1,4 @@
-import { Navbar, Container, Button, Image } from "react-bootstrap";
+import { Navbar, Container, Button, Image, NavDropdown } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -27,18 +27,18 @@ export default function Header() {
           <Navbar.Brand className="fw-bold fs-4">JobSearch</Navbar.Brand>
         </div>
 
-        {/* Right: user info or login */}
-        <div className="ms-auto d-flex align-items-center gap-3">
+        {/* Right: user menu or login */}
+        <div className="ms-auto d-flex align-items-center">
           {user ? (
-            <>
-              <span className="text-muted small">{user.username}</span>
-              <Button variant="outline-secondary" size="sm" onClick={() => navigate("/admin")}>
+            <NavDropdown title={user.username} align="end" id="user-menu">
+              <NavDropdown.Item onClick={() => navigate("/admin")}>
                 ⚙ Manage
-              </Button>
-              <Button variant="outline-secondary" size="sm" onClick={handleLogout}>
+              </NavDropdown.Item>
+              <NavDropdown.Divider />
+              <NavDropdown.Item onClick={handleLogout}>
                 Logout
-              </Button>
-            </>
+              </NavDropdown.Item>
+            </NavDropdown>
           ) : (
             <Button variant="primary" size="sm" onClick={() => navigate("/login")}>
               Login
