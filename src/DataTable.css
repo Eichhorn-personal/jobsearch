@@ -76,3 +76,35 @@
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* ── Dark mode overrides ─────────────────────────────────────── */
+[data-bs-theme="dark"] .sheet-scroll {
+  border-color: #495057;
+}
+
+[data-bs-theme="dark"] .sheet-grid {
+  border-bottom-color: #495057;
+}
+
+[data-bs-theme="dark"] .sheet-header {
+  background: #2b3035;
+  color: #dee2e6;
+}
+
+[data-bs-theme="dark"] .sheet-cell {
+  border-right-color: #495057;
+  color: #dee2e6;
+}
+
+[data-bs-theme="dark"] .sheet-input {
+  color: #dee2e6;
+}
+
+[data-bs-theme="dark"] .sheet-input:focus {
+  outline-color: #4dabf7;
+  background: #1a3a4a;
+}
+
+[data-bs-theme="dark"] .sheet-link a {
+  color: #74c0fc;
+}

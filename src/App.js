@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Container from "react-bootstrap/Container";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Header from "./components/Header";
+import Footer from "./components/Footer";
 import DataTable from "./components/DataTable";
 import LoginPage from "./pages/LoginPage";
 import AdminPage from "./pages/AdminPage";
@@ -11,14 +12,15 @@ function ProtectedRoute({ children }) {
   return user ? children : <Navigate to="/login" replace />;
 }
 
-function AppLayout() {
+function PageLayout({ children }) {
   return (
-    <>
+    <div className="d-flex flex-column min-vh-100">
       <Header />
-      <Container className="mt-4">
-        <DataTable />
-      </Container>
-    </>
+      <main className="flex-grow-1">
+        {children}
+      </main>
+      <Footer />
+    </div>
   );
 }
 
@@ -31,7 +33,11 @@ export default function App() {
           path="/"
           element={
             <ProtectedRoute>
-              <AppLayout />
+              <PageLayout>
+                <Container className="mt-4">
+                  <DataTable />
+                </Container>
+              </PageLayout>
             </ProtectedRoute>
           }
         />
@@ -39,10 +45,9 @@ export default function App() {
           path="/admin"
           element={
             <ProtectedRoute>
-              <>
-                <Header />
+              <PageLayout>
                 <AdminPage />
-              </>
+              </PageLayout>
             </ProtectedRoute>
           }
         />

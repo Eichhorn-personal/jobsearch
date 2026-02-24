@@ -3,9 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { Card, Form, Button, Alert, Container } from "react-bootstrap";
 import { GoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const { theme } = useTheme();
   const navigate = useNavigate();
 
   const [mode, setMode] = useState("login"); // "login" | "register"
@@ -121,6 +123,7 @@ export default function LoginPage() {
               onError={() => setError("Google sign-in was cancelled or failed")}
               useOneTap={false}
               text={mode === "login" ? "signin_with" : "signup_with"}
+              theme={theme === "dark" ? "filled_black" : "outline"}
             />
           </div>
 
