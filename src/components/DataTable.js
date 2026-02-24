@@ -76,18 +76,6 @@ export default function DataTable() {
     }
   };
 
-  const downloadData = () => {
-    const blob = new Blob([JSON.stringify(rows, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "job-tracker-data.json";
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
   const startResize = (col, e) => {
     e.preventDefault();
     const startX = e.clientX;
@@ -114,7 +102,6 @@ export default function DataTable() {
     <Container fluid className="p-0">
       <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
         <Button onClick={() => setShowAddModal(true)}>Add Job</Button>
-        <Button variant="secondary" onClick={downloadData}>Download Data</Button>
       </div>
 
       <AddJobModal

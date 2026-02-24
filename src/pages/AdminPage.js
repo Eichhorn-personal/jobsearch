@@ -138,7 +138,24 @@ export default function AdminPage() {
         >
           ← Back
         </Button>
-        <h4 className="mb-0">Manage Dropdown Options</h4>
+        <h4 className="mb-0 flex-grow-1">Manage Dropdown Options</h4>
+        <Button
+          variant="outline-secondary"
+          size="sm"
+          onClick={async () => {
+            const res = await request("/api/jobs");
+            const data = await res.json();
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "job-tracker-data.json";
+            a.click();
+            URL.revokeObjectURL(url);
+          }}
+        >
+          Download Data
+        </Button>
       </div>
 
       {/* One card per field */}
