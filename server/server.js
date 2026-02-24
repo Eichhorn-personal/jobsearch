@@ -9,7 +9,13 @@ const dropdownRoutes = require("./routes/dropdowns");
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors({ origin: "http://localhost:3000" }));
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:3000").split(",").map(s => s.trim());
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin || allowedOrigins.includes(origin)) cb(null, true);
+    else cb(new Error("Not allowed by CORS"));
+  },
+}));
 app.use(express.json());
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));

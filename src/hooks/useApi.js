@@ -15,7 +15,8 @@ export function useApi() {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       };
 
-      const res = await fetch(path, { ...options, headers });
+      const base = process.env.REACT_APP_API_URL || "";
+      const res = await fetch(base + path, { ...options, headers });
 
       if (res.status === 401) {
         logout();

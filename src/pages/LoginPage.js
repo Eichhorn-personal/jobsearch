@@ -16,12 +16,14 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const API_BASE = process.env.REACT_APP_API_URL || "";
+
   // --- Google Sign-In ---
   const handleGoogleSuccess = async (credentialResponse) => {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/google", {
+      const res = await fetch(`${API_BASE}/api/auth/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ credential: credentialResponse.credential }),
@@ -48,7 +50,7 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
+    const endpoint = mode === "login" ? `${API_BASE}/api/auth/login` : `${API_BASE}/api/auth/register`;
 
     try {
       const res = await fetch(endpoint, {
@@ -74,7 +76,7 @@ export default function LoginPage() {
 
       if (mode === "register") {
         // Auto-login after register
-        const loginRes = await fetch("/api/auth/login", {
+        const loginRes = await fetch(`${API_BASE}/api/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username, password }),

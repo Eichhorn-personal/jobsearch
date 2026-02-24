@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: jobsearch-api
+    runtime: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: https://eichhorn-personal.github.io
+      - key: DB_PATH
+        value: /var/data/jobsearch.db
+    disk:
+      name: jobsearch-sqlite
+      mountPath: /var/data
+      sizeGB: 1
