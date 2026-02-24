@@ -142,6 +142,14 @@ export default function AdminPage() {
         <Button
           variant="outline-secondary"
           size="sm"
+          onClick={() => navigate("/logs")}
+          className="me-2"
+        >
+          View Logs
+        </Button>
+        <Button
+          variant="outline-secondary"
+          size="sm"
           onClick={async () => {
             const res = await request("/api/jobs");
             const data = await res.json();

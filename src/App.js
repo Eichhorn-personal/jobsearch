@@ -6,6 +6,7 @@ import Footer from "./components/Footer";
 import DataTable from "./components/DataTable";
 import LoginPage from "./pages/LoginPage";
 import AdminPage from "./pages/AdminPage";
+import LogsPage from "./pages/LogsPage";
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
@@ -47,6 +48,16 @@ export default function App() {
             <ProtectedRoute>
               <PageLayout>
                 <AdminPage />
+              </PageLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/logs"
+          element={
+            <ProtectedRoute>
+              <PageLayout>
+                <LogsPage />
               </PageLayout>
             </ProtectedRoute>
           }
