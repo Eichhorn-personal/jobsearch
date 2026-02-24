@@ -19,6 +19,14 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      const base = process.env.REACT_APP_API_URL || "";
+      fetch(`${base}/api/auth/logout`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => {});
+    }
     localStorage.removeItem("authToken");
     localStorage.removeItem("authUser");
     setUser(null);

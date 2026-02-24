@@ -78,7 +78,7 @@ router.post("/", (req, res) => {
   });
 
   const created = db.prepare("SELECT * FROM jobs WHERE id = ?").get(result.lastInsertRowid);
-  log("JOB_CREATED", { id: created.id, user_id: req.user.id, role: created.role, company: created.company });
+  log("JOB_CREATED", { id: created.id, email: req.user.username, role: created.role, company: created.company });
   return res.status(201).json(rowToFrontend(created));
 });
 
@@ -124,7 +124,7 @@ router.put("/:id", (req, res) => {
   });
 
   const updated = db.prepare("SELECT * FROM jobs WHERE id = ?").get(req.params.id);
-  log("JOB_UPDATED", { id: updated.id, user_id: req.user.id, role: updated.role, company: updated.company });
+  log("JOB_UPDATED", { id: updated.id, email: req.user.username, role: updated.role, company: updated.company });
   return res.json(rowToFrontend(updated));
 });
 
@@ -135,7 +135,7 @@ router.delete("/:id", (req, res) => {
   if (job.user_id !== req.user.id) return res.status(403).json({ error: "Forbidden" });
 
   db.prepare("DELETE FROM jobs WHERE id = ?").run(req.params.id);
-  log("JOB_DELETED", { id: job.id, user_id: req.user.id, role: job.role, company: job.company });
+  log("JOB_DELETED", { id: job.id, email: req.user.username, role: job.role, company: job.company });
   return res.status(204).send();
 });
 

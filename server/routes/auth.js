@@ -63,6 +63,7 @@ router.post("/login", (req, res) => {
     { expiresIn: "8h" }
   );
 
+  log("USER_LOGIN", { email: user.username, source: "password" });
   return res.json({ token, user: { id: user.id, username: user.username } });
 });
 
@@ -114,7 +115,14 @@ router.post("/google", async (req, res) => {
     { expiresIn: "8h" }
   );
 
+  log("USER_LOGIN", { email: user.username, source: "google" });
   return res.json({ token, user: { id: user.id, username: user.username } });
+});
+
+// POST /api/auth/logout
+router.post("/logout", authenticate, (req, res) => {
+  log("USER_LOGOUT", { email: req.user.username });
+  return res.status(204).send();
 });
 
 // GET /api/auth/me
