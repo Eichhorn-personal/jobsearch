@@ -5,6 +5,8 @@ import { useApi } from "../hooks/useApi";
 
 const EVENT_VARIANT = {
   USER_CREATED: "primary",
+  USER_LOGIN:   "info",
+  USER_LOGOUT:  "secondary",
   JOB_CREATED:  "success",
   JOB_UPDATED:  "warning",
   JOB_DELETED:  "danger",
@@ -18,13 +20,19 @@ function EntryDetails({ event, data }) {
   if (event === "USER_CREATED") {
     return <>{data.email} &nbsp;<span className="text-muted small">id={data.id} source={data.source}</span></>;
   }
+  if (event === "USER_LOGIN") {
+    return <>{data.email} &nbsp;<span className="text-muted small">source={data.source}</span></>;
+  }
+  if (event === "USER_LOGOUT") {
+    return <>{data.email}</>;
+  }
   const parts = [];
   if (data.role)    parts.push(data.role);
   if (data.company) parts.push(data.company);
   return (
     <>
       {parts.join(" · ")}
-      &nbsp;<span className="text-muted small">job_id={data.id} user_id={data.user_id}</span>
+      &nbsp;<span className="text-muted small">job_id={data.id} email={data.email}</span>
     </>
   );
 }
