@@ -35,4 +35,16 @@ router.put("/:id/role", (req, res) => {
   return res.json(updated);
 });
 
+// DELETE /api/users/:id
+router.delete("/:id", (req, res) => {
+  if (Number(req.params.id) === req.user.id) {
+    return res.status(400).json({ error: "Cannot delete your own account" });
+  }
+  const user = db.prepare("SELECT id FROM users WHERE id = ?").get(req.params.id);
+  if (!user) return res.status(404).json({ error: "User not found" });
+
+  db.prepare("DELETE FROM users WHERE id = ?").run(req.params.id);
+  return res.status(204).send();
+});
+
 module.exports = router;

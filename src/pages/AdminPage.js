@@ -16,6 +16,7 @@ export default function AdminPage() {
   }, [user, navigate]);
 
   const [users, setUsers] = useState(null);
+  const [confirmDeleteUser, setConfirmDeleteUser] = useState(null);
 
   const loadUsers = useCallback(() => {
     request("/api/users")
@@ -35,6 +36,14 @@ export default function AdminPage() {
       const updated = await res.json();
       setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
     }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    const res = await request(`/api/users/${userId}`, { method: "DELETE" });
+    if (res.ok || res.status === 204) {
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+    }
+    setConfirmDeleteUser(null);
   };
 
   // { "Status": [{ id, label, sort_order }, ...], ... }
@@ -206,6 +215,7 @@ export default function AdminPage() {
                 <tr>
                   <th className="px-3">Email</th>
                   <th className="px-3" style={{ width: 160 }}>Role</th>
+                  <th style={{ width: 40 }}></th>
                 </tr>
               </thead>
               <tbody>
@@ -222,6 +232,13 @@ export default function AdminPage() {
                         <option value="admin">admin</option>
                       </Form.Select>
                     </td>
+                    <td className="text-center">
+                      <span
+                        style={{ cursor: "pointer", fontSize: "15px", opacity: 0.6 }}
+                        title="Delete user"
+                        onClick={() => setConfirmDeleteUser(u)}
+                      >🗑️</span>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -229,6 +246,35 @@ export default function AdminPage() {
           )}
         </Card.Body>
       </Card>
+
+      {/* Confirm delete user */}
+      {confirmDeleteUser && (
+        <div
+          className="modal show d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          onClick={() => setConfirmDeleteUser(null)}
+        >
+          <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Delete User?</h5>
+                <button className="btn-close" onClick={() => setConfirmDeleteUser(null)} />
+              </div>
+              <div className="modal-body">
+                <p className="mb-0">
+                  Are you sure you want to delete <strong>{confirmDeleteUser.username}</strong>?
+                  <br />
+                  <span className="text-muted small">This will also delete all their job records.</span>
+                </p>
+              </div>
+              <div className="modal-footer">
+                <Button variant="secondary" onClick={() => setConfirmDeleteUser(null)}>Cancel</Button>
+                <Button variant="danger" onClick={() => handleDeleteUser(confirmDeleteUser.id)}>Delete</Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* One card per field */}
       {Object.entries(dropdowns).map(([fieldName, options]) => (
