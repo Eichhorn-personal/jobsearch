@@ -1,19 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { Button, Container } from "react-bootstrap";
 import { useApi } from "../hooks/useApi";
-import { formatDate } from "../utils/dateFormat";
 import AddJobModal from "./AddJobModal";
 import "../DataTable.css";
 
-const COLUMNS = [
-  "Date", "Role", "Company", "Source Link", "Company Link",
-  "Resume", "Cover Letter", "Status",
-  "Recruiter", "Hiring Mgr", "Panel", "HR", "Comments",
-];
-
-const linkFields = ["Source Link", "Company Link"];
-const checkboxFields = ["Resume", "Cover Letter"];
-const dropdownFields = ["Status"];
+const COLUMNS = ["Date", "Role", "Company", "Status"];
 
 export default function DataTable() {
   const [rows, setRows] = useState([]);
@@ -25,8 +16,6 @@ export default function DataTable() {
     }
   });
   const [dropdownOptions, setDropdownOptions] = useState({});
-  const [dateErrors, setDateErrors] = useState({});
-  const [editingCell, setEditingCell] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [viewingRow, setViewingRow] = useState(null);
   const gridRef = useRef(null);
@@ -50,30 +39,6 @@ export default function DataTable() {
       })
       .catch(err => console.error("Failed to load dropdown options:", err));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const updateCell = async (id, field, value) => {
-    // Optimistic update
-    setRows(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r));
-    try {
-      await request(`/api/jobs/${id}`, {
-        method: "PUT",
-        body: JSON.stringify({ [field]: value }),
-      });
-    } catch (err) {
-      console.error("Failed to update cell:", err);
-    }
-  };
-
-  const handleDateBlur = async (id, value) => {
-    const formatted = formatDate(value);
-    if (formatted === null) {
-      setDateErrors(prev => ({ ...prev, [id]: true }));
-      setRows(prev => prev.map(r => r.id === id ? { ...r, Date: value } : r));
-      return;
-    }
-    setDateErrors(prev => ({ ...prev, [id]: false }));
-    await updateCell(id, "Date", formatted);
-  };
 
   const handleAddJob = async (formData) => {
     try {
@@ -143,75 +108,6 @@ export default function DataTable() {
     window.addEventListener("mouseup", onMouseUp);
   };
 
-  const renderCell = (row, col) => {
-    const value = row[col];
-    const isLink = linkFields.includes(col);
-    const isCheckbox = checkboxFields.includes(col);
-    const isDropdown = dropdownFields.includes(col);
-    const isEditing = editingCell?.row === row.id && editingCell?.col === col;
-
-    if (isCheckbox) {
-      return (
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%", width: "100%" }}>
-          <input
-            type="checkbox"
-            checked={!!value}
-            onChange={() => updateCell(row.id, col, !value)}
-          />
-        </div>
-      );
-    }
-
-    if (isDropdown) {
-      return (
-        <select
-          className="sheet-input"
-          value={value}
-          onChange={(e) => updateCell(row.id, col, e.target.value)}
-          style={{ padding: "4px", width: "100%" }}
-        >
-          {(dropdownOptions[col] || []).map(opt => (
-            <option key={opt} value={opt}>{opt}</option>
-          ))}
-        </select>
-      );
-    }
-
-    if (isLink && !isEditing && value && value.startsWith("http")) {
-      return (
-        <div className="sheet-link">
-          <a
-            href={value}
-            target="_blank"
-            rel="noopener noreferrer"
-            title={value}
-            onClick={(e) => e.stopPropagation()}
-            onDoubleClick={() => setEditingCell({ row: row.id, col })}
-          >
-            link
-          </a>
-        </div>
-      );
-    }
-
-    return (
-      <input
-        className="sheet-input"
-        data-row={row.id}
-        data-field={col}
-        value={value ?? ""}
-        onChange={e => updateCell(row.id, col, e.target.value)}
-        onBlur={col === "Date"
-          ? e => handleDateBlur(row.id, e.target.value)
-          : () => setEditingCell(null)}
-        onDoubleClick={() => setEditingCell({ row: row.id, col })}
-        style={{
-          border: col === "Date" && dateErrors[row.id] ? "2px solid red" : "none",
-          background: col === "Date" && dateErrors[row.id] ? "#ffe3e3" : "transparent",
-        }}
-      />
-    );
-  };
 
   return (
     <Container fluid className="p-0">
@@ -232,44 +128,41 @@ export default function DataTable() {
 
       <div className="sheet-scroll" ref={gridRef}>
         <div className="sheet-grid sheet-header">
-          <div className="sheet-cell" style={{ width: 36 }}></div>
+          <div className="sheet-cell" style={{ width: 64 }}></div>
           {COLUMNS.map(col => (
             <div key={col} className="sheet-cell" style={{ width: colWidths[col] || 150 }}>
               {col}
               <div className="col-resizer" onMouseDown={e => startResize(col, e)} />
             </div>
           ))}
-          <div className="sheet-cell" style={{ width: 100 }}></div>
         </div>
 
         {rows.map(row => (
           <div key={row.id} className="sheet-grid">
-            <div className="sheet-cell" style={{ width: 36, justifyContent: "center" }}>
+            <div className="sheet-cell" style={{ width: 64, justifyContent: "center", gap: 6, display: "flex" }}>
               <span
                 style={{ cursor: "pointer", fontSize: "15px", userSelect: "none", opacity: 0.6 }}
                 title="View / edit"
                 onClick={() => setViewingRow(row)}
               >👁</span>
+              <span
+                style={{ cursor: "pointer", fontSize: "15px", userSelect: "none", opacity: 0.6 }}
+                title="Delete"
+                onClick={() => {
+                  if (window.confirm(`Delete this record?\n\n${[row.Date, row.Role, row.Company].filter(Boolean).join(" · ")}`))
+                    deleteRow(row.id);
+                }}
+              >🗑️</span>
             </div>
             {COLUMNS.map(col => (
               <div
                 key={col}
                 className="sheet-cell"
-                style={{ width: colWidths[col] || 150, display: "flex", justifyContent: "center", alignItems: "center" }}
-                onClick={() => setEditingCell({ row: row.id, col })}
+                style={{ width: colWidths[col] || 150 }}
               >
-                {renderCell(row, col)}
+                <span style={{ padding: "4px 6px" }}>{row[col] ?? ""}</span>
               </div>
             ))}
-            <div className="sheet-cell" style={{ width: 100, textAlign: "center" }}>
-              <span
-                style={{ cursor: "pointer", fontSize: "18px", color: "#b00", userSelect: "none" }}
-                onClick={() => deleteRow(row.id)}
-                title="Delete row"
-              >
-                🗑️
-              </span>
-            </div>
           </div>
         ))}
       </div>

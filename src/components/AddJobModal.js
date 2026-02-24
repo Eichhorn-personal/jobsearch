@@ -15,7 +15,7 @@ const emptyForm = () => ({
   "Company Link": "",
   Resume: false,
   "Cover Letter": false,
-  Status: "",
+  Status: "Applied",
   Recruiter: "",
   "Hiring Mgr": "",
   Panel: "",
@@ -28,7 +28,7 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
   const isEditing = !!initialData;
 
   const [form, setForm] = useState(() =>
-    initialData ? { ...initialData } : { ...emptyForm(), Status: (dropdownOptions["Status"] || [])[0] ?? "" }
+    initialData ? { ...initialData } : emptyForm()
   );
   const [dateError, setDateError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -62,7 +62,7 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
       await onSave(committed);
     } else {
       await onAdd(committed);
-      setForm({ ...emptyForm(), Status: (dropdownOptions["Status"] || [])[0] ?? "" });
+      setForm(emptyForm());
       setDateError(false);
     }
     setSubmitting(false);
@@ -71,7 +71,7 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
 
   const handleHide = () => {
     if (!isEditing) {
-      setForm({ ...emptyForm(), Status: (dropdownOptions["Status"] || [])[0] ?? "" });
+      setForm(emptyForm());
       setDateError(false);
     }
     onHide();
