@@ -70,6 +70,9 @@ if (!userCols.includes("role")) {
 }
 
 // Always ensure designated admin has admin role (handles fresh DBs where user didn't exist at migration time)
-db.prepare("UPDATE users SET role = 'admin' WHERE username = ?").run("ceichhorn@gmail.com");
+const adminEmail = process.env.ADMIN_EMAIL;
+if (adminEmail) {
+  db.prepare("UPDATE users SET role = 'admin' WHERE username = ?").run(adminEmail);
+}
 
 module.exports = db;

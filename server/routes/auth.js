@@ -73,7 +73,7 @@ router.post("/login", async (req, res) => {
     return res.status(400).json({ error: "Username must be a valid email address" });
   }
 
-  const user = db.prepare("SELECT * FROM users WHERE username = ?").get(username);
+  const user = db.prepare("SELECT id, username, password, google_id, role FROM users WHERE username = ?").get(username);
   if (!user || !user.password) {
     await bcrypt.compare(password, DUMMY_HASH); // equalize timing to prevent username enumeration
     return res.status(401).json({ error: "Invalid credentials" });
@@ -121,25 +121,25 @@ router.post("/google", async (req, res) => {
   }
 
   // 1. Already linked to this Google account
-  let user = db.prepare("SELECT * FROM users WHERE google_id = ?").get(googleId);
+  let user = db.prepare("SELECT id, username, role FROM users WHERE google_id = ?").get(googleId);
 
   if (!user) {
     // 2. Existing account with matching email username — link it
-    const byEmail = db.prepare("SELECT * FROM users WHERE username = ?").get(email);
+    const byEmail = db.prepare("SELECT id, username, role FROM users WHERE username = ?").get(email);
     if (byEmail) {
       db.prepare("UPDATE users SET google_id = ? WHERE id = ?").run(googleId, byEmail.id);
-      user = db.prepare("SELECT * FROM users WHERE id = ?").get(byEmail.id);
+      user = db.prepare("SELECT id, username, role FROM users WHERE id = ?").get(byEmail.id);
       log("GOOGLE_ACCOUNT_LINKED", { id: user.id, email });
     }
   }
 
   if (!user) {
     // 3. Brand-new user — create one
-    const role = email === "ceichhorn@gmail.com" ? "admin" : "contributor";
+    const role = process.env.ADMIN_EMAIL && email.toLowerCase() === process.env.ADMIN_EMAIL.toLowerCase() ? "admin" : "contributor";
     const result = db
       .prepare("INSERT INTO users (username, password, google_id, role) VALUES (?, ?, ?, ?)")
       .run(email, "", googleId, role);
-    user = db.prepare("SELECT * FROM users WHERE id = ?").get(result.lastInsertRowid);
+    user = db.prepare("SELECT id, username, role FROM users WHERE id = ?").get(result.lastInsertRowid);
     log("USER_CREATED", { id: user.id, email, source: "google" });
   }
 

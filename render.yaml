@@ -10,6 +10,10 @@ services:
         generateValue: true
       - key: GOOGLE_CLIENT_ID
         sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ALLOWED_EMAILS
+        sync: false
       - key: ALLOWED_ORIGINS
         value: https://eichhorn-personal.github.io
       - key: DB_PATH
