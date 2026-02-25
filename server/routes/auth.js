@@ -25,7 +25,7 @@ function isEmailAllowed(email) {
 }
 
 // POST /api/auth/register
-router.post("/register", (req, res) => {
+router.post("/register", async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
     return res.status(400).json({ error: "Email and password are required" });
@@ -43,7 +43,7 @@ router.post("/register", (req, res) => {
     return res.status(403).json({ error: "Registration is not open for this email address" });
   }
 
-  const hash = bcrypt.hashSync(password, 10);
+  const hash = await bcrypt.hash(password, 10);
   try {
     const stmt = db.prepare("INSERT INTO users (username, password) VALUES (?, ?)");
     const result = stmt.run(username, hash);
@@ -58,7 +58,7 @@ router.post("/register", (req, res) => {
 });
 
 // POST /api/auth/login
-router.post("/login", (req, res) => {
+router.post("/login", async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
     return res.status(400).json({ error: "Email and password are required" });
@@ -75,13 +75,13 @@ router.post("/login", (req, res) => {
 
   const user = db.prepare("SELECT * FROM users WHERE username = ?").get(username);
   if (!user || !user.password) {
-    bcrypt.compareSync(password, DUMMY_HASH); // equalize timing to prevent username enumeration
+    await bcrypt.compare(password, DUMMY_HASH); // equalize timing to prevent username enumeration
     return res.status(401).json({ error: "Invalid credentials" });
   }
   if (user.google_id && !user.password) {
     return res.status(400).json({ error: "This account uses Google Sign-In. Please use the Google button." });
   }
-  if (!bcrypt.compareSync(password, user.password)) {
+  if (!await bcrypt.compare(password, user.password)) {
     return res.status(401).json({ error: "Invalid credentials" });
   }
 
@@ -129,6 +129,7 @@ router.post("/google", async (req, res) => {
     if (byEmail) {
       db.prepare("UPDATE users SET google_id = ? WHERE id = ?").run(googleId, byEmail.id);
       user = db.prepare("SELECT * FROM users WHERE id = ?").get(byEmail.id);
+      log("GOOGLE_ACCOUNT_LINKED", { id: user.id, email });
     }
   }
 

@@ -43,7 +43,7 @@ app.use("/api/users", userRoutes);
 
 // Generic error handler
 app.use((err, _req, res, _next) => {
-  console.error(err);
+  console.error(`[${new Date().toISOString()}] UNHANDLED_ERROR message="${err.message}"\n${err.stack}`);
   res.status(500).json({ error: "Internal server error" });
 });
 
