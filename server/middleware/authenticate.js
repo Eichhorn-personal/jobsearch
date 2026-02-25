@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const db = require("../db/database");
 
 module.exports = function authenticate(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -9,7 +10,10 @@ module.exports = function authenticate(req, res, next) {
   const token = authHeader.slice(7);
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ["HS256"] });
-    req.user = { id: payload.sub, username: payload.username, role: payload.role };
+    // Re-fetch role from DB so role changes take effect immediately without waiting for token expiry
+    const user = db.prepare("SELECT id, username, role FROM users WHERE id = ?").get(payload.sub);
+    if (!user) return res.status(401).json({ error: "Token expired or invalid" });
+    req.user = { id: user.id, username: user.username, role: user.role };
     next();
   } catch {
     return res.status(401).json({ error: "Token expired or invalid" });

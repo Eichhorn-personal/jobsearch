@@ -28,6 +28,29 @@ const FRONTEND_TO_DB = Object.fromEntries(
   Object.entries(DB_TO_FRONTEND).map(([db, fe]) => [fe, db])
 );
 
+const URL_RE = /^https?:\/\//i;
+
+function validateJobFields(body) {
+  const str = (v) => (v === undefined || v === null ? "" : String(v));
+  const checks = [
+    [str(body["Role"]).length > 200,        "Role must be 200 characters or fewer"],
+    [str(body["Company"]).length > 200,     "Company must be 200 characters or fewer"],
+    [str(body["Recruiter"]).length > 200,   "Recruiter must be 200 characters or fewer"],
+    [str(body["Hiring Mgr"]).length > 200,  "Hiring Mgr must be 200 characters or fewer"],
+    [str(body["Panel"]).length > 200,       "Panel must be 200 characters or fewer"],
+    [str(body["HR"]).length > 200,          "HR must be 200 characters or fewer"],
+    [str(body["Comments"]).length > 5000,   "Comments must be 5000 characters or fewer"],
+    [str(body["Source Link"]).length > 2000,  "Source Link must be 2000 characters or fewer"],
+    [str(body["Company Link"]).length > 2000, "Company Link must be 2000 characters or fewer"],
+    [body["Source Link"] && !URL_RE.test(body["Source Link"]),   "Source Link must start with http:// or https://"],
+    [body["Company Link"] && !URL_RE.test(body["Company Link"]), "Company Link must start with http:// or https://"],
+  ];
+  for (const [failed, message] of checks) {
+    if (failed) return message;
+  }
+  return null;
+}
+
 function rowToFrontend(row) {
   const obj = {};
   for (const [dbCol, feField] of Object.entries(DB_TO_FRONTEND)) {
@@ -51,6 +74,9 @@ router.get("/", (req, res) => {
 // POST /api/jobs
 router.post("/", (req, res) => {
   const body = req.body;
+  const validationError = validateJobFields(body);
+  if (validationError) return res.status(400).json({ error: validationError });
+
   const stmt = db.prepare(`
     INSERT INTO jobs
       (user_id, date, role, company, source_link, company_link,
@@ -89,6 +115,9 @@ router.put("/:id", (req, res) => {
   if (job.user_id !== req.user.id) return res.status(403).json({ error: "Forbidden" });
 
   const body = req.body;
+  const validationError = validateJobFields(body);
+  if (validationError) return res.status(400).json({ error: validationError });
+
   db.prepare(`
     UPDATE jobs SET
       date = @date,

@@ -12,14 +12,35 @@ const router = express.Router();
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Dummy hash used to equalize timing when user is not found (prevents username enumeration)
+const DUMMY_HASH = bcrypt.hashSync("dummy-timing-equalization", 10);
+
+// If ALLOWED_EMAILS is set, only those addresses may register or sign in
+const ALLOWED_EMAILS = process.env.ALLOWED_EMAILS
+  ? process.env.ALLOWED_EMAILS.split(",").map(e => e.trim().toLowerCase())
+  : null;
+
+function isEmailAllowed(email) {
+  return !ALLOWED_EMAILS || ALLOWED_EMAILS.includes(email.toLowerCase());
+}
+
 // POST /api/auth/register
 router.post("/register", (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
     return res.status(400).json({ error: "Email and password are required" });
   }
+  if (typeof username !== "string" || username.length > 254) {
+    return res.status(400).json({ error: "Email must be 254 characters or fewer" });
+  }
+  if (typeof password !== "string" || password.length < 8 || password.length > 128) {
+    return res.status(400).json({ error: "Password must be between 8 and 128 characters" });
+  }
   if (!EMAIL_RE.test(username)) {
     return res.status(400).json({ error: "Username must be a valid email address" });
+  }
+  if (!isEmailAllowed(username)) {
+    return res.status(403).json({ error: "Registration is not open for this email address" });
   }
 
   const hash = bcrypt.hashSync(password, 10);
@@ -42,12 +63,19 @@ router.post("/login", (req, res) => {
   if (!username || !password) {
     return res.status(400).json({ error: "Email and password are required" });
   }
+  if (typeof username !== "string" || username.length > 254) {
+    return res.status(400).json({ error: "Email must be 254 characters or fewer" });
+  }
+  if (typeof password !== "string" || password.length > 128) {
+    return res.status(400).json({ error: "Invalid credentials" });
+  }
   if (!EMAIL_RE.test(username)) {
     return res.status(400).json({ error: "Username must be a valid email address" });
   }
 
   const user = db.prepare("SELECT * FROM users WHERE username = ?").get(username);
   if (!user || !user.password) {
+    bcrypt.compareSync(password, DUMMY_HASH); // equalize timing to prevent username enumeration
     return res.status(401).json({ error: "Invalid credentials" });
   }
   if (user.google_id && !user.password) {
@@ -87,6 +115,10 @@ router.post("/google", async (req, res) => {
 
   const googleId = payload.sub;
   const email = payload.email;
+
+  if (!isEmailAllowed(email)) {
+    return res.status(403).json({ error: "Registration is not open for this email address" });
+  }
 
   // 1. Already linked to this Google account
   let user = db.prepare("SELECT * FROM users WHERE google_id = ?").get(googleId);
