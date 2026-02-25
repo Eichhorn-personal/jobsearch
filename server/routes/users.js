@@ -1,6 +1,7 @@
 const express = require("express");
 const db = require("../db/database");
 const authenticate = require("../middleware/authenticate");
+const { log } = require("../logger");
 
 const router = express.Router();
 router.use(authenticate);
@@ -32,6 +33,7 @@ router.put("/:id/role", (req, res) => {
   const updated = db
     .prepare("SELECT id, username, role, created_at FROM users WHERE id = ?")
     .get(req.params.id);
+  log("USER_ROLE_CHANGED", { adminEmail: req.user.username, targetId: req.params.id, targetEmail: updated.username, newRole: role });
   return res.json(updated);
 });
 
@@ -40,10 +42,11 @@ router.delete("/:id", (req, res) => {
   if (Number(req.params.id) === req.user.id) {
     return res.status(400).json({ error: "Cannot delete your own account" });
   }
-  const user = db.prepare("SELECT id FROM users WHERE id = ?").get(req.params.id);
+  const user = db.prepare("SELECT id, username FROM users WHERE id = ?").get(req.params.id);
   if (!user) return res.status(404).json({ error: "User not found" });
 
   db.prepare("DELETE FROM users WHERE id = ?").run(req.params.id);
+  log("USER_DELETED", { adminEmail: req.user.username, targetId: req.params.id, targetEmail: user.username });
   return res.status(204).send();
 });
 

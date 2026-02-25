@@ -13,6 +13,13 @@ function ProtectedRoute({ children }) {
   return user ? children : <Navigate to="/login" replace />;
 }
 
+function AdminRoute({ children }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role !== "admin") return <Navigate to="/" replace />;
+  return children;
+}
+
 function PageLayout({ children }) {
   return (
     <div className="d-flex flex-column min-vh-100">
@@ -45,21 +52,21 @@ export default function App() {
         <Route
           path="/admin"
           element={
-            <ProtectedRoute>
+            <AdminRoute>
               <PageLayout>
                 <AdminPage />
               </PageLayout>
-            </ProtectedRoute>
+            </AdminRoute>
           }
         />
         <Route
           path="/logs"
           element={
-            <ProtectedRoute>
+            <AdminRoute>
               <PageLayout>
                 <LogsPage />
               </PageLayout>
-            </ProtectedRoute>
+            </AdminRoute>
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />

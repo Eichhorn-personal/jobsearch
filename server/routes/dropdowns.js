@@ -5,6 +5,11 @@ const authenticate = require("../middleware/authenticate");
 const router = express.Router();
 router.use(authenticate);
 
+const requireAdmin = (req, res, next) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Forbidden" });
+  next();
+};
+
 // GET /api/dropdowns
 // Returns all fields grouped: { "Status": [{ id, label, sort_order }, ...], ... }
 router.get("/", (_req, res) => {
@@ -22,7 +27,7 @@ router.get("/", (_req, res) => {
 
 // POST /api/dropdowns/:fieldName  { label }
 // Add a new option to a field
-router.post("/:fieldName", (req, res) => {
+router.post("/:fieldName", requireAdmin, (req, res) => {
   const { fieldName } = req.params;
   const { label } = req.body;
   if (!label || !label.trim()) {
@@ -49,7 +54,7 @@ router.post("/:fieldName", (req, res) => {
 
 // PUT /api/dropdowns/:fieldName/reorder  { orderedIds: [1, 3, 2, ...] }
 // Bulk-update sort_order to match the supplied array position
-router.put("/:fieldName/reorder", (req, res) => {
+router.put("/:fieldName/reorder", requireAdmin, (req, res) => {
   const { orderedIds } = req.body;
   if (!Array.isArray(orderedIds)) {
     return res.status(400).json({ error: "orderedIds must be an array" });
@@ -65,7 +70,7 @@ router.put("/:fieldName/reorder", (req, res) => {
 
 // PUT /api/dropdowns/option/:id  { label }
 // Rename an option
-router.put("/option/:id", (req, res) => {
+router.put("/option/:id", requireAdmin, (req, res) => {
   const { label } = req.body;
   if (!label || !label.trim()) {
     return res.status(400).json({ error: "label is required" });
@@ -87,7 +92,7 @@ router.put("/option/:id", (req, res) => {
 });
 
 // DELETE /api/dropdowns/option/:id
-router.delete("/option/:id", (req, res) => {
+router.delete("/option/:id", requireAdmin, (req, res) => {
   const opt = db.prepare("SELECT * FROM dropdown_options WHERE id = ?").get(req.params.id);
   if (!opt) return res.status(404).json({ error: "Option not found" });
 

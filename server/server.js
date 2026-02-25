@@ -1,6 +1,8 @@
 require("dotenv").config({ path: require("path").join(__dirname, ".env") });
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 
 const authRoutes = require("./routes/auth");
 const jobRoutes = require("./routes/jobs");
@@ -11,6 +13,8 @@ const userRoutes = require("./routes/users");
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+app.use(helmet());
+
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:3000").split(",").map(s => s.trim());
 app.use(cors({
   origin: (origin, cb) => {
@@ -20,7 +24,17 @@ app.use(cors({
 }));
 app.use(express.json());
 
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many attempts, please try again later" },
+});
+
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
 app.use("/api/auth", authRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/dropdowns", dropdownRoutes);

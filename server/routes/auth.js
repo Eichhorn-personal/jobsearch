@@ -60,7 +60,7 @@ router.post("/login", (req, res) => {
   const token = jwt.sign(
     { sub: user.id, username: user.username, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: "8h" }
+    { algorithm: "HS256", expiresIn: "8h" }
   );
 
   log("USER_LOGIN", { email: user.username, source: "password" });
@@ -113,7 +113,7 @@ router.post("/google", async (req, res) => {
   const token = jwt.sign(
     { sub: user.id, username: user.username, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: "8h" }
+    { algorithm: "HS256", expiresIn: "8h" }
   );
 
   log("USER_LOGIN", { email: user.username, source: "google" });
