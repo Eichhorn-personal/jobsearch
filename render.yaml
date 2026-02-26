@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: jobsearch-api
+    name: jobtracker-api
     runtime: node
     rootDir: server
     buildCommand: npm install
@@ -17,8 +17,8 @@ services:
       - key: ALLOWED_ORIGINS
         value: https://eichhorn-personal.github.io
       - key: DB_PATH
-        value: /var/data/jobsearch.db
+        value: /var/data/jobtracker.db
     disk:
-      name: jobsearch-sqlite
+      name: jobtracker-sqlite
       mountPath: /var/data
       sizeGB: 1

@@ -14,9 +14,9 @@ test.describe("Auth — redirects", () => {
 // ── login form ────────────────────────────────────────────────────────────────
 
 test.describe("Auth — login form", () => {
-  test('renders "Sign in to JobSearch" heading', async ({ page }) => {
+  test('renders "Sign in to JobTracker" heading', async ({ page }) => {
     await page.goto("/#/login");
-    await expect(page.getByRole("heading", { name: /sign in to jobsearch/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /sign in to jobtracker/i })).toBeVisible();
   });
 
   test('switching to register mode shows "Create account" heading', async ({ page }) => {

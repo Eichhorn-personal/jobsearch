@@ -29,10 +29,10 @@ afterEach(() => {
 // ── heading & mode toggle ─────────────────────────────────────────────────────
 
 describe("LoginPage — heading", () => {
-  test('renders "Sign in to JobSearch" heading', () => {
+  test('renders "Sign in to JobTracker" heading', () => {
     renderLoginPage();
     expect(
-      screen.getByRole("heading", { name: /sign in to jobsearch/i })
+      screen.getByRole("heading", { name: /sign in to jobtracker/i })
     ).toBeInTheDocument();
   });
 
@@ -49,7 +49,7 @@ describe("LoginPage — heading", () => {
     userEvent.click(screen.getByRole("button", { name: /register/i }));
     userEvent.click(screen.getByRole("button", { name: /sign in/i }));
     expect(
-      screen.getByRole("heading", { name: /sign in to jobsearch/i })
+      screen.getByRole("heading", { name: /sign in to jobtracker/i })
     ).toBeInTheDocument();
   });
 });

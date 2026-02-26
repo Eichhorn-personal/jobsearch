@@ -1,4 +1,4 @@
-# JobSearch Test Plan
+# JobTracker Test Plan
 
 ## Recommended Test Framework Stack
 
@@ -99,7 +99,7 @@
 
 | Test | Assertion |
 |------|-----------|
-| Renders "Sign in to JobSearch" h1 | heading present |
+| Renders "Sign in to JobTracker" h1 | heading present |
 | Toggle to register mode | h1 changes to "Create account" |
 | Submit with empty fields | form doesn't call fetch |
 | API error shown in alert | `role="alert"` contains error text |

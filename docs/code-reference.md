@@ -84,7 +84,7 @@ A thin wrapper around `fetch` that:
 
 Top navigation bar. Rendered inside `PageLayout` on all authenticated pages.
 
-- Brand: `JobSearch` logo + text — links to `/#/`
+- Brand: `JobTracker` logo + text — links to `/#/`
 - Logo image has `alt=""` (decorative, not announced by screen readers)
 - Right side: `NavDropdown` with the logged-in `username` as the toggle
   - Admin users see a **⚙ Manage** item linking to `/#/admin`

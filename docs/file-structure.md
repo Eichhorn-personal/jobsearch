@@ -1,7 +1,7 @@
 # File Structure
 
 ```
-jobsearch/
+jobtracker/
 ├── docs/                          # Project wiki (this directory)
 │   ├── architecture.md
 │   ├── api-reference.md
@@ -22,7 +22,7 @@ jobsearch/
 │   ├── server.js                  # Entry point: binds to PORT
 │   ├── logger.js                  # Appends structured events to app.log
 │   ├── .env                       # Secrets (gitignored): JWT_SECRET, GOOGLE_CLIENT_ID, PORT
-│   ├── jobsearch.db               # SQLite database (gitignored, auto-created)
+│   ├── jobtracker.db               # SQLite database (gitignored, auto-created)
 │   ├── app.log                    # Activity log (gitignored, LOG_PATH overrides path)
 │   ├── db/
 │   │   └── database.js            # DB connection, schema creation, migrations, admin seeding

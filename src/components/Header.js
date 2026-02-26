@@ -25,7 +25,7 @@ export default function Header() {
             roundedCircle
             className="me-2"
           />
-          JobSearch
+          JobTracker
         </Navbar.Brand>
 
         {/* Right: user menu or login */}

@@ -98,7 +98,7 @@ The tests import the Express `app` directly (from `server/app.js`) and use Super
 
 | Test | What it verifies |
 |------|-----------------|
-| Renders "Sign in to JobSearch" heading | `role="heading"` present |
+| Renders "Sign in to JobTracker" heading | `role="heading"` present |
 | Toggle to register mode | heading changes to "Create account" |
 | Toggle back to sign in | heading reverts |
 | Error from API shown in alert | `role="alert"` contains error text |
@@ -173,7 +173,7 @@ The tests import the Express `app` directly (from `server/app.js`) and use Super
 | Test | Flow |
 |------|------|
 | Unauthenticated → redirected to `/#/login` | Navigate to `/#/`; assert URL |
-| "Sign in to JobSearch" heading renders | Navigate to `/#/login`; assert heading |
+| "Sign in to JobTracker" heading renders | Navigate to `/#/login`; assert heading |
 | Toggle to register mode | Click Register button; assert heading changes |
 | Successful login redirects home | Fill form; submit; assert URL and username in header |
 | Invalid credentials shows error alert | Mock 401; fill form; submit; assert alert text |

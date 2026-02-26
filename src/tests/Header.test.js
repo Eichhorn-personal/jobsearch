@@ -43,7 +43,7 @@ describe("Header — ARIA structure", () => {
 
   test("brand renders as a link", () => {
     renderHeader({ id: 1, username: "u@example.com", role: "contributor" });
-    expect(screen.getByRole("link", { name: /jobsearch/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /jobtracker/i })).toBeInTheDocument();
   });
 });
 

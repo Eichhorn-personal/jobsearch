@@ -68,7 +68,7 @@ Role is **re-fetched from the database on every request** (not just read from th
 
 ### Database
 
-- File: `server/jobsearch.db` (auto-created, gitignored)
+- File: `server/jobtracker.db` (auto-created, gitignored)
 - WAL journal mode + foreign keys enabled
 - Migrations run automatically at startup via `PRAGMA table_info` checks
 
@@ -86,8 +86,8 @@ Role is **re-fetched from the database on every request** (not just read from th
 
 | Layer | Service | URL |
 |-------|---------|-----|
-| Frontend | GitHub Pages | https://eichhorn-personal.github.io/jobsearch |
-| Backend | Render.com | https://jobsearch-wc4q.onrender.com |
+| Frontend | GitHub Pages | https://eichhorn-personal.github.io/jobtracker |
+| Backend | Render.com | https://jobtracker-XXXX.onrender.com (update after recreating Render service) |
 
 ### Frontend deploy
 
@@ -97,7 +97,7 @@ npm run deploy   # runs npm run build then gh-pages -d build
 
 Environment variable required in `.env.production`:
 ```
-REACT_APP_API_URL=https://jobsearch-wc4q.onrender.com
+REACT_APP_API_URL=https://jobtracker-XXXX.onrender.com
 ```
 
 ### Backend deploy

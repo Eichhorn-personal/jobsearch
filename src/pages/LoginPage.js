@@ -113,7 +113,7 @@ export default function LoginPage() {
       <Card style={{ width: "100%", maxWidth: 400 }} className="shadow-sm">
         <Card.Body className="p-4">
           <Card.Title as="h1" className="mb-4 text-center fs-4 fw-bold">
-            {mode === "login" ? "Sign in to JobSearch" : "Create account"}
+            {mode === "login" ? "Sign in to JobTracker" : "Create account"}
           </Card.Title>
 
           <div aria-live="polite" aria-atomic="true">

@@ -1,4 +1,4 @@
-# JobSearch
+# JobTracker
 
 A personal job-application tracker with a React frontend and a Node/Express backend.
 
