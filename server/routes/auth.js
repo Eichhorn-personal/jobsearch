@@ -15,13 +15,12 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Dummy hash used to equalize timing when user is not found (prevents username enumeration)
 const DUMMY_HASH = bcrypt.hashSync("dummy-timing-equalization", 10);
 
-// If ALLOWED_EMAILS is set, only those addresses may register or sign in
-const ALLOWED_EMAILS = process.env.ALLOWED_EMAILS
-  ? process.env.ALLOWED_EMAILS.split(",").map(e => e.trim().toLowerCase())
-  : null;
-
+// If ALLOWED_EMAILS is set, only those addresses may register or sign in.
+// Read from process.env at call time so it can be overridden in tests.
 function isEmailAllowed(email) {
-  return !ALLOWED_EMAILS || ALLOWED_EMAILS.includes(email.toLowerCase());
+  if (!process.env.ALLOWED_EMAILS) return true;
+  const allowed = process.env.ALLOWED_EMAILS.split(",").map(e => e.trim().toLowerCase());
+  return allowed.includes(email.toLowerCase());
 }
 
 // POST /api/auth/register
