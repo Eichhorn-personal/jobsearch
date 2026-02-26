@@ -1,8 +1,6 @@
-import { render, screen } from '@testing-library/react';
-import App from './App';
+// Component and routing tests live in src/tests/
+// This file is kept as a placeholder (CRA requires at least one test file).
 
-test('renders learn react link', () => {
-  render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+test("placeholder — see src/tests/ for component tests", () => {
+  expect(true).toBe(true);
 });
