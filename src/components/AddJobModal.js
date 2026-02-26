@@ -81,9 +81,9 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
   const formStatus = form.Status || statusOptions[0] || "";
 
   return (
-    <Modal show={show} onHide={handleHide} size="lg">
+    <Modal show={show} onHide={handleHide} size="lg" aria-labelledby="add-job-modal-title">
       <Modal.Header closeButton>
-        <Modal.Title>{isEditing ? "Edit Job" : "Add Job"}</Modal.Title>
+        <Modal.Title id="add-job-modal-title">{isEditing ? "Edit Job" : "Add Job"}</Modal.Title>
       </Modal.Header>
 
       <Form onSubmit={handleSubmit}>
@@ -99,10 +99,11 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
                   onChange={e => { set("Date", e.target.value); setDateError(false); }}
                   onBlur={handleDateBlur}
                   isInvalid={dateError}
+                  aria-describedby={dateError ? "date-error" : undefined}
                   autoFocus
                 />
                 {dateError && (
-                  <Form.Control.Feedback type="invalid">
+                  <Form.Control.Feedback type="invalid" id="date-error">
                     Enter a date like 2/3, 2/3/25, or 02/03/2025
                   </Form.Control.Feedback>
                 )}

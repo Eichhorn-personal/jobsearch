@@ -92,9 +92,9 @@ export default function DataTable() {
         dropdownOptions={dropdownOptions}
       />
 
-      <Modal show={!!confirmRow} onHide={() => setConfirmRow(null)} centered>
+      <Modal show={!!confirmRow} onHide={() => setConfirmRow(null)} centered aria-labelledby="confirm-delete-title">
         <Modal.Header closeButton>
-          <Modal.Title>Delete Record?</Modal.Title>
+          <Modal.Title id="confirm-delete-title">Delete Record?</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {confirmRow && (
@@ -113,39 +113,45 @@ export default function DataTable() {
         </Modal.Footer>
       </Modal>
 
-      <div className="sheet-scroll">
-        <div className="sheet-grid sheet-header">
-          <div className="sheet-cell" style={{ width: 56, flexShrink: 0 }}></div>
-          {COLUMNS.map(col => (
-            <div key={col} className="sheet-cell" style={COL_STYLE[col]}>
-              {col}
-            </div>
-          ))}
-        </div>
-
-        {rows.map(row => (
-          <div key={row.id} className="sheet-grid">
-            <div className="sheet-cell" style={{ width: 56, flexShrink: 0, justifyContent: "center", gap: 6, display: "flex" }}>
-              <span
-                style={{ cursor: "pointer", fontSize: "15px", userSelect: "none", opacity: 0.6 }}
-                title="View / edit"
-                onClick={() => setViewingRow(row)}
-              >👁</span>
-              <span
-                style={{ cursor: "pointer", fontSize: "15px", userSelect: "none", opacity: 0.6 }}
-                title="Delete"
-                onClick={() => setConfirmRow(row)}
-              >🗑️</span>
-            </div>
+      <div className="sheet-scroll" role="table" aria-label="Job applications">
+        <div role="rowgroup">
+          <div className="sheet-grid sheet-header" role="row">
+            <div className="sheet-cell" role="columnheader" aria-label="Actions" style={{ width: 56, flexShrink: 0 }}></div>
             {COLUMNS.map(col => (
-              <div key={col} className="sheet-cell" style={COL_STYLE[col]}>
-                <span style={{ padding: "4px 6px", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {row[col] ?? ""}
-                </span>
+              <div key={col} className="sheet-cell" role="columnheader" style={COL_STYLE[col]}>
+                {col}
               </div>
             ))}
           </div>
-        ))}
+        </div>
+
+        <div role="rowgroup">
+          {rows.map(row => (
+            <div key={row.id} className="sheet-grid" role="row">
+              <div className="sheet-cell" role="cell" style={{ width: 56, flexShrink: 0, justifyContent: "center", gap: 6, display: "flex" }}>
+                <button
+                  className="btn btn-sm btn-link p-0"
+                  style={{ fontSize: "15px", opacity: 0.6 }}
+                  aria-label={`View or edit ${row.Role || "job"} at ${row.Company || "unknown company"}`}
+                  onClick={() => setViewingRow(row)}
+                >👁</button>
+                <button
+                  className="btn btn-sm btn-link p-0"
+                  style={{ fontSize: "15px", opacity: 0.6 }}
+                  aria-label={`Delete ${row.Role || "job"} at ${row.Company || "unknown company"}`}
+                  onClick={() => setConfirmRow(row)}
+                >🗑️</button>
+              </div>
+              {COLUMNS.map(col => (
+                <div key={col} className="sheet-cell" role="cell" style={COL_STYLE[col]}>
+                  <span style={{ padding: "4px 6px", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {row[col] ?? ""}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     </Container>
   );

@@ -45,43 +45,46 @@ export default function LogsPage() {
   return (
     <Container className="mt-4" style={{ maxWidth: 860 }}>
       <div className="d-flex align-items-center mb-4">
-        <Button variant="outline-secondary" size="sm" onClick={() => navigate("/admin")} className="me-3">
+        <Button variant="outline-secondary" size="sm" onClick={() => navigate("/admin")} className="me-3" aria-label="Back to admin">
           ← Back
         </Button>
-        <h4 className="mb-0 flex-grow-1">Activity Log</h4>
+        <h1 className="mb-0 flex-grow-1 h4">Activity Log</h1>
         <Button variant="outline-secondary" size="sm" onClick={load}>Refresh</Button>
       </div>
 
-      {entries === null ? (
-        <div className="text-center mt-5"><Spinner animation="border" /></div>
-      ) : entries.length === 0 ? (
-        <p className="text-muted">No log entries yet.</p>
-      ) : (
-        <Table hover size="sm" className="align-middle">
-          <thead>
-            <tr>
-              <th style={{ width: 180 }}>Time</th>
-              <th style={{ width: 130 }}>Event</th>
-              <th>Details</th>
-            </tr>
-          </thead>
-          <tbody>
-            {entries.map((e, i) => (
-              <tr key={i}>
-                <td className="text-muted small">{formatTimestamp(e.timestamp)}</td>
-                <td className="small">
-                  <Badge bg={EVENT_VARIANT[e.event] || "secondary"}>
-                    {e.event}
-                  </Badge>
-                </td>
-                <td className="small">
-                  <EntryDetails data={e.data} />
-                </td>
+      <div aria-live="polite">
+        {entries === null ? (
+          <div className="text-center mt-5"><Spinner animation="border" /></div>
+        ) : entries.length === 0 ? (
+          <p className="text-muted">No log entries yet.</p>
+        ) : (
+          <Table hover size="sm" className="align-middle">
+            <caption className="visually-hidden">Activity log entries</caption>
+            <thead>
+              <tr>
+                <th scope="col" style={{ width: 180 }}>Time</th>
+                <th scope="col" style={{ width: 130 }}>Event</th>
+                <th scope="col">Details</th>
               </tr>
-            ))}
-          </tbody>
-        </Table>
-      )}
+            </thead>
+            <tbody>
+              {entries.map((e, i) => (
+                <tr key={i}>
+                  <td className="text-muted small">{formatTimestamp(e.timestamp)}</td>
+                  <td className="small">
+                    <Badge bg={EVENT_VARIANT[e.event] || "secondary"} text={EVENT_VARIANT[e.event] === "warning" ? "dark" : undefined}>
+                      {e.event}
+                    </Badge>
+                  </td>
+                  <td className="small">
+                    <EntryDetails data={e.data} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        )}
+      </div>
     </Container>
   );
 }

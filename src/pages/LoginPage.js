@@ -112,11 +112,13 @@ export default function LoginPage() {
     >
       <Card style={{ width: "100%", maxWidth: 400 }} className="shadow-sm">
         <Card.Body className="p-4">
-          <Card.Title className="mb-4 text-center fs-4 fw-bold">
+          <Card.Title as="h1" className="mb-4 text-center fs-4 fw-bold">
             {mode === "login" ? "Sign in to JobSearch" : "Create account"}
           </Card.Title>
 
-          {error && <Alert variant="danger">{error}</Alert>}
+          <div aria-live="polite" aria-atomic="true">
+            {error && <Alert variant="danger" role="alert">{error}</Alert>}
+          </div>
 
           {/* Google button */}
           <div className="d-flex justify-content-center mb-3">
@@ -176,6 +178,7 @@ export default function LoginPage() {
               <>
                 No account?{" "}
                 <button
+                  type="button"
                   className="btn btn-link btn-sm p-0"
                   onClick={() => { setMode("register"); setError(""); }}
                 >
@@ -186,6 +189,7 @@ export default function LoginPage() {
               <>
                 Already have an account?{" "}
                 <button
+                  type="button"
                   className="btn btn-link btn-sm p-0"
                   onClick={() => { setMode("login"); setError(""); }}
                 >
