@@ -111,7 +111,7 @@ Auto-deploys to Render on every push to `master`. Required Render environment va
 | `ALLOWED_ORIGINS` | `https://eichhorn-personal.github.io` |
 | `ADMIN_EMAIL` | Email address to grant admin role on startup |
 
-> **SQLite on Render**: The database is ephemeral — it is wiped on every redeploy. A persistent disk is not yet configured. The `ADMIN_EMAIL` mechanism ensures the admin account regains its role after each redeploy.
+> **SQLite on Render**: A 1 GB persistent disk is mounted at `/var/data` and the DB path is set to `/var/data/jobtracker.db` via the `DB_PATH` env var, so data survives redeploys. The `ADMIN_EMAIL` mechanism additionally ensures the admin account role is enforced on every startup.
 
 ### Keep-alive
 
