@@ -26,7 +26,9 @@
     "server": "node server/server.js",
     "dev": "concurrently -k -n \"client,server\" -c \"cyan,green\" \"npm start\" \"npm run server\"",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d build",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "eslintConfig": {
     "extends": [
@@ -47,6 +49,7 @@
     ]
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "gh-pages": "^6.3.0"
   },
   "jest": {
