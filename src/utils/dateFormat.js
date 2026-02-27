@@ -1,27 +1,36 @@
+// For known job sites, only these query params are kept; everything else is stripped.
+// Sites not listed fall back to the TRACKING_PARAMS blocklist.
+const SITE_ALLOWLISTS = {
+  "indeed.com":      new Set(["jk"]),
+  "linkedin.com":    new Set([]),       // job ID is in the path
+  "glassdoor.com":   new Set([]),       // job ID is in the path
+  "ziprecruiter.com":new Set([]),       // job ID is in the path
+  "monster.com":     new Set([]),       // job ID is in the path
+  "dice.com":        new Set([]),       // job ID is in the path
+};
+
 const TRACKING_PARAMS = new Set([
-  // UTM
   "utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "utm_id",
-  // LinkedIn
   "trk", "trkInfo", "trackingId", "refId", "lipi",
-  // Google
-  "gclid", "gclsrc", "dclid",
-  // Facebook
-  "fbclid",
-  // Microsoft
-  "msclkid",
-  // Mailchimp
-  "mc_cid", "mc_eid",
-  // Generic
+  "gclid", "gclsrc", "dclid", "fbclid", "msclkid", "mc_cid", "mc_eid",
   "ref", "referrer", "referral", "source", "src", "via", "icid", "cmpid",
 ]);
+
+function getAllowlist(hostname) {
+  for (const [domain, allowed] of Object.entries(SITE_ALLOWLISTS)) {
+    if (hostname === domain || hostname.endsWith("." + domain)) return allowed;
+  }
+  return null;
+}
 
 export function cleanJobUrl(value) {
   if (!value) return value;
   try {
     const url = new URL(value);
     url.hash = "";
+    const allowlist = getAllowlist(url.hostname);
     for (const key of [...url.searchParams.keys()]) {
-      if (TRACKING_PARAMS.has(key) || key.startsWith("utm_")) {
+      if (allowlist ? !allowlist.has(key) : (TRACKING_PARAMS.has(key) || key.startsWith("utm_"))) {
         url.searchParams.delete(key);
       }
     }
