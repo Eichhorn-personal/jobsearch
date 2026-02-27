@@ -4,7 +4,7 @@ const SITE_ALLOWLISTS = {
   "indeed.com":      new Set(["jk"]),
   "linkedin.com":    new Set([]),       // job ID is in the path
   "glassdoor.com":   new Set([]),       // job ID is in the path
-  "ziprecruiter.com":new Set([]),       // job ID is in the path
+  "ziprecruiter.com":new Set(["job"]),       // job ID is in the path
   "monster.com":     new Set([]),       // job ID is in the path
   "dice.com":        new Set([]),       // job ID is in the path
 };
