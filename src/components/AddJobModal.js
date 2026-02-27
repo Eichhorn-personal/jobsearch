@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Modal, Button, Form, Row, Col } from "react-bootstrap";
-import { formatDate } from "../utils/dateFormat";
+import { formatDate, cleanJobUrl } from "../utils/dateFormat";
 
 const today = () => {
   const d = new Date();
@@ -34,6 +34,15 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
   const [submitting, setSubmitting] = useState(false);
 
   const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
+
+  const handleUrlPaste = (field) => (e) => {
+    const pasted = e.clipboardData.getData("text");
+    const cleaned = cleanJobUrl(pasted);
+    if (cleaned !== pasted) {
+      e.preventDefault();
+      set(field, cleaned);
+    }
+  };
 
   const handleDateBlur = () => {
     if (!form.Date) { setDateError(false); return; }
@@ -156,6 +165,7 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
                   placeholder="https://"
                   value={form["Source Link"]}
                   onChange={e => set("Source Link", e.target.value)}
+                  onPaste={handleUrlPaste("Source Link")}
                 />
               </Form.Group>
             </Col>
@@ -167,6 +177,7 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
                   placeholder="https://"
                   value={form["Company Link"]}
                   onChange={e => set("Company Link", e.target.value)}
+                  onPaste={handleUrlPaste("Company Link")}
                 />
               </Form.Group>
             </Col>

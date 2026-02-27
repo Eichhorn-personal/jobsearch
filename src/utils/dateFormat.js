@@ -1,3 +1,36 @@
+const TRACKING_PARAMS = new Set([
+  // UTM
+  "utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "utm_id",
+  // LinkedIn
+  "trk", "trkInfo", "trackingId", "refId", "lipi",
+  // Google
+  "gclid", "gclsrc", "dclid",
+  // Facebook
+  "fbclid",
+  // Microsoft
+  "msclkid",
+  // Mailchimp
+  "mc_cid", "mc_eid",
+  // Generic
+  "ref", "referrer", "referral", "source", "src", "via", "icid", "cmpid",
+]);
+
+export function cleanJobUrl(value) {
+  if (!value) return value;
+  try {
+    const url = new URL(value);
+    url.hash = "";
+    for (const key of [...url.searchParams.keys()]) {
+      if (TRACKING_PARAMS.has(key) || key.startsWith("utm_")) {
+        url.searchParams.delete(key);
+      }
+    }
+    return url.toString();
+  } catch {
+    return value;
+  }
+}
+
 export function formatDate(value) {
   if (!value) return "";
   const cleaned = value.replace(/-/g, "/").trim();
