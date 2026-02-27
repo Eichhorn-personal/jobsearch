@@ -81,7 +81,7 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
   const formStatus = form.Status || statusOptions[0] || "";
 
   return (
-    <Modal show={show} onHide={handleHide} size="lg" aria-labelledby="add-job-modal-title">
+    <Modal show={show} onHide={handleHide} size="lg" aria-labelledby="add-job-modal-title" backdrop="static" keyboard={false}>
       <Modal.Header closeButton>
         <Modal.Title id="add-job-modal-title">{isEditing ? "Edit Job" : "Add Job"}</Modal.Title>
       </Modal.Header>
