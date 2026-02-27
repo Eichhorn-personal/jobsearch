@@ -113,7 +113,7 @@ export default function DataTable() {
         </Modal.Footer>
       </Modal>
 
-      <div className="job-cards d-sm-none" aria-label="Job applications">
+      <div className="job-cards d-md-none" aria-label="Job applications">
         {rows.map(row => (
           <div key={row.id} className="job-card">
             <div className="job-card-main">
@@ -131,7 +131,7 @@ export default function DataTable() {
         ))}
       </div>
 
-      <div className="sheet-scroll d-none d-sm-block" role="table" aria-label="Job applications">
+      <div className="sheet-scroll d-none d-md-block" role="table" aria-label="Job applications">
         <div role="rowgroup">
           <div className="sheet-grid sheet-header" role="row">
             <div className="sheet-cell" role="columnheader" aria-label="Actions" style={{ width: 56, flexShrink: 0 }}></div>

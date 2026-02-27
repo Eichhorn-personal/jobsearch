@@ -1,6 +1,6 @@
 /* Horizontal scroll container */
 .sheet-scroll {
-  overflow-x: hidden;
+  overflow-x: auto;
   overflow-y: hidden;
   border: 1px solid #ced4da;
 }

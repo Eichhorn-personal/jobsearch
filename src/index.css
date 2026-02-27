@@ -1,3 +1,8 @@
+/* Prevent content from hiding behind the fixed footer (~50px tall) */
+main {
+  padding-bottom: 56px;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
