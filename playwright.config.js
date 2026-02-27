@@ -17,6 +17,12 @@ module.exports = defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+      testIgnore: "**/mobile.spec.js",
+    },
+    {
+      name: "mobile-chrome",
+      use: { ...devices["Pixel 5"] },
+      testMatch: "**/mobile.spec.js",
     },
   ],
   // Start the CRA dev server before tests; skip if already running
