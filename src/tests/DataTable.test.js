@@ -67,7 +67,7 @@ describe("DataTable — action buttons", () => {
     renderDataTable();
     await waitFor(() => {
       expect(
-        screen.getByRole("button", { name: /view or edit engineer at acme/i })
+        screen.getAllByRole("button", { name: /view or edit engineer at acme/i })[0]
       ).toBeInTheDocument();
     });
   });
@@ -76,7 +76,7 @@ describe("DataTable — action buttons", () => {
     renderDataTable();
     await waitFor(() => {
       expect(
-        screen.getByRole("button", { name: /delete engineer at acme/i })
+        screen.getAllByRole("button", { name: /delete engineer at acme/i })[0]
       ).toBeInTheDocument();
     });
   });
@@ -88,10 +88,10 @@ describe("DataTable — delete confirmation", () => {
   test("clicking delete icon shows confirmation dialog", async () => {
     renderDataTable();
     await waitFor(() =>
-      screen.getByRole("button", { name: /delete engineer at acme/i })
+      screen.getAllByRole("button", { name: /delete engineer at acme/i })[0]
     );
     userEvent.click(
-      screen.getByRole("button", { name: /delete engineer at acme/i })
+      screen.getAllByRole("button", { name: /delete engineer at acme/i })[0]
     );
     await waitFor(() =>
       expect(screen.getByRole("dialog")).toBeInTheDocument()
@@ -101,10 +101,10 @@ describe("DataTable — delete confirmation", () => {
   test("confirm dialog has aria-labelledby pointing to title", async () => {
     renderDataTable();
     await waitFor(() =>
-      screen.getByRole("button", { name: /delete engineer at acme/i })
+      screen.getAllByRole("button", { name: /delete engineer at acme/i })[0]
     );
     userEvent.click(
-      screen.getByRole("button", { name: /delete engineer at acme/i })
+      screen.getAllByRole("button", { name: /delete engineer at acme/i })[0]
     );
     await waitFor(() => screen.getByRole("dialog"));
     expect(screen.getByRole("dialog")).toHaveAttribute(
@@ -116,17 +116,17 @@ describe("DataTable — delete confirmation", () => {
   test("confirming delete removes the row from the table", async () => {
     renderDataTable();
     await waitFor(() =>
-      screen.getByRole("button", { name: /delete engineer at acme/i })
+      screen.getAllByRole("button", { name: /delete engineer at acme/i })[0]
     );
     userEvent.click(
-      screen.getByRole("button", { name: /delete engineer at acme/i })
+      screen.getAllByRole("button", { name: /delete engineer at acme/i })[0]
     );
     await waitFor(() => screen.getByRole("dialog"));
     userEvent.click(screen.getByRole("button", { name: "Delete" }));
     await waitFor(() =>
       expect(
-        screen.queryByRole("button", { name: /delete engineer at acme/i })
-      ).not.toBeInTheDocument()
+        screen.queryAllByRole("button", { name: /delete engineer at acme/i })
+      ).toHaveLength(0)
     );
   });
 });

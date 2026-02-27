@@ -166,12 +166,11 @@ export default function AdminPage() {
     <Container className="mt-4" style={{ maxWidth: 620 }}>
 
       {/* Header row */}
-      <div className="d-flex align-items-center mb-4">
+      <div className="d-flex flex-wrap align-items-center gap-2 mb-4">
         <Button
           variant="outline-secondary"
           size="sm"
           onClick={() => navigate("/")}
-          className="me-3"
           aria-label="Back to home"
         >
           ← Back
@@ -181,7 +180,6 @@ export default function AdminPage() {
           variant="outline-secondary"
           size="sm"
           onClick={() => navigate("/logs")}
-          className="me-2"
         >
           View Logs
         </Button>
@@ -212,6 +210,7 @@ export default function AdminPage() {
             {users === null ? (
               <div className="text-center p-3"><Spinner animation="border" size="sm" /></div>
             ) : (
+              <div className="table-responsive">
               <Table size="sm" className="mb-0 align-middle">
                 <thead className="table-light">
                   <tr>
@@ -247,6 +246,7 @@ export default function AdminPage() {
                   ))}
                 </tbody>
               </Table>
+              </div>
             )}
           </div>
         </Card.Body>

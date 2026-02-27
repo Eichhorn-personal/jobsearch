@@ -18,13 +18,13 @@ function formatTimestamp(ts) {
 
 function EntryDetails({ data }) {
   return (
-    <>
+    <span style={{ display: "flex", flexWrap: "wrap", gap: "0 12px" }}>
       {Object.entries(data)
         .filter(([k]) => k !== "id")
         .map(([k, v]) => (
-          <span key={k} className="me-3">{k}={String(v)}</span>
+          <span key={k}>{k}={String(v)}</span>
         ))}
-    </>
+    </span>
   );
 }
 
@@ -58,6 +58,7 @@ export default function LogsPage() {
         ) : entries.length === 0 ? (
           <p className="text-muted">No log entries yet.</p>
         ) : (
+          <div className="table-responsive">
           <Table hover size="sm" className="align-middle">
             <caption className="visually-hidden">Activity log entries</caption>
             <thead>
@@ -83,6 +84,7 @@ export default function LogsPage() {
               ))}
             </tbody>
           </Table>
+          </div>
         )}
       </div>
     </Container>

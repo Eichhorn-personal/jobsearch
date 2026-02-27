@@ -12,7 +12,6 @@ export default function Footer() {
           className="btn btn-sm btn-outline-secondary"
           onClick={toggleTheme}
           aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-          style={{ minWidth: 90 }}
         >
           {isDark ? "☀️  Light" : "🌙  Dark"}
         </button>

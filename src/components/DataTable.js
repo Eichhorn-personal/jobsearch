@@ -113,7 +113,25 @@ export default function DataTable() {
         </Modal.Footer>
       </Modal>
 
-      <div className="sheet-scroll" role="table" aria-label="Job applications">
+      <div className="job-cards d-sm-none" aria-label="Job applications">
+        {rows.map(row => (
+          <div key={row.id} className="job-card">
+            <div className="job-card-main">
+              <div className="job-card-role">{row.Role || "—"}</div>
+              <div className="job-card-company text-muted small">{row.Company || ""}</div>
+              <div className="job-card-meta text-muted small">
+                {[row.Status, row.Date].filter(Boolean).join(" · ")}
+              </div>
+            </div>
+            <div className="job-card-actions">
+              <button className="btn btn-link job-card-btn" aria-label={`View or edit ${row.Role || "job"} at ${row.Company || "unknown company"}`} onClick={() => setViewingRow(row)}>👁</button>
+              <button className="btn btn-link job-card-btn" aria-label={`Delete ${row.Role || "job"} at ${row.Company || "unknown company"}`} onClick={() => setConfirmRow(row)}>🗑️</button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="sheet-scroll d-none d-sm-block" role="table" aria-label="Job applications">
         <div role="rowgroup">
           <div className="sheet-grid sheet-header" role="row">
             <div className="sheet-cell" role="columnheader" aria-label="Actions" style={{ width: 56, flexShrink: 0 }}></div>
