@@ -152,6 +152,10 @@ A React Bootstrap `Modal` used for both adding and editing jobs. The parent pass
 
 **Date handling**: The `Date` field accepts flexible input. On blur, `formatDate()` normalises it to `MM/DD/YYYY`. An inline error is shown if parsing fails; submission is blocked until it's fixed.
 
+**URL handling**: Source Link and Company Link have an `onPaste` handler that calls `cleanJobUrl()` to strip tracking parameters before the value is set. If the pasted text is already clean, the default paste behaviour runs unchanged.
+
+**Focus lock**: The modal uses `backdrop="static"` and `keyboard={false}` so it only closes when the user explicitly clicks Cancel or the submit button — not on outside click or Escape.
+
 **Note**: `Form.Group` does not use `controlId`, so the `<label>` elements are not programmatically associated with their `<input>` elements via `htmlFor`. In tests, select form inputs by type and index.
 
 ---
@@ -192,6 +196,8 @@ Admin-only activity log viewer. Accessible at `/#/logs`. Displays log entries ne
 
 ### `dateFormat.js` — `src/utils/dateFormat.js`
 
+#### `formatDate(value)`
+
 ```js
 import { formatDate } from "../utils/dateFormat";
 formatDate("2/3")        // → "02/03/2025" (current year)
@@ -200,7 +206,37 @@ formatDate("02/03/2025") // → "02/03/2025"
 formatDate("not a date") // → null
 ```
 
-Shared between `AddJobModal` (live validation on blur) and any other date-handling code.
+Used by `AddJobModal` for live date validation on blur.
+
+#### `cleanJobUrl(value)`
+
+```js
+import { cleanJobUrl } from "../utils/dateFormat";
+cleanJobUrl("https://www.linkedin.com/jobs/view/123/?trk=abc&refId=xyz") // → "https://www.linkedin.com/jobs/view/123/"
+cleanJobUrl("https://www.indeed.com/viewjob?jk=abc123&utm_source=google") // → "https://www.indeed.com/viewjob?jk=abc123"
+cleanJobUrl("not a url") // → "not a url" (returned as-is)
+```
+
+Strips tracking parameters and hash fragments from job URLs. Called `onPaste` in `AddJobModal` for the Source Link and Company Link fields.
+
+**Strategy**: two-tier.
+
+1. **Site allowlist** — for known job boards, only explicitly listed query params are kept; everything else is stripped.
+2. **Blocklist fallback** — for unknown domains, a set of common tracking param names (UTM, LinkedIn, Google, Facebook, etc.) is removed; unrecognised params are left untouched.
+
+**Site allowlists**
+
+| Domain | Kept params | Rationale |
+|--------|-------------|-----------|
+| `indeed.com` | `jk` | Job identifier is a query param |
+| `linkedin.com` | _(none)_ | Job ID is in the path |
+| `glassdoor.com` | _(none)_ | Job ID is in the path |
+| `ziprecruiter.com` | `job` | Job identifier is a query param |
+| `monster.com` | _(none)_ | Job ID is in the path |
+| `dice.com` | _(none)_ | Job ID is in the path |
+| `greenhouse.io` | `for`, `token` | Needed for embedded board URLs |
+
+Subdomain matching is handled automatically (`www.indeed.com`, `boards.greenhouse.io`, etc.).
 
 ---
 

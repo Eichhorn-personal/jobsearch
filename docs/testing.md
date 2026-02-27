@@ -213,6 +213,72 @@ Each test starts with auth pre-seeded and waits for the job table to be visible.
 
 ---
 
+## Manual — `cleanJobUrl` utility
+
+`cleanJobUrl` in `src/utils/dateFormat.js` was verified by running each site's typical URL patterns through a Node.js script. No automated test exists for this utility yet.
+
+### LinkedIn
+
+| Input | Output |
+|-------|--------|
+| `.../jobs/view/4168195487/?refId=…&trackingId=…&trk=…` | `.../jobs/view/4168195487/` |
+| `.../jobs/view/4168195487/?trk=…&lipi=…` | `.../jobs/view/4168195487/` |
+| `.../jobs/view/4168195487/` | unchanged |
+
+### Indeed
+
+| Input | Output |
+|-------|--------|
+| `…/viewjob?jk=abc123&utm_source=google&utm_medium=cpc&utm_campaign=jobs` | `…/viewjob?jk=abc123` |
+| `…/viewjob?jk=abc123&from=serp&vjs=3&referer=…` | `…/viewjob?jk=abc123` |
+| `…/applystart?jk=abc123&from=vj&pos=0&sjdu=…&astse=…` | `…/applystart?jk=abc123` |
+
+### Glassdoor
+
+| Input | Output |
+|-------|--------|
+| `…/job-listing/…JV_….htm?jl=…&src=GD_JOB_AD&t=SR&guid=…` | `…/job-listing/…JV_….htm` |
+| `…/job-listing/apply/….htm?src=GD_JOB_AD&t=SR&guid=…` | `…/job-listing/apply/….htm` |
+
+### ZipRecruiter
+
+| Input | Output |
+|-------|--------|
+| `…/c/Acme/Job/Engineer?job=abc123&utm_source=google` | `…/c/Acme/Job/Engineer?job=abc123` |
+| `…/jobs/acme-12345/engineer-abcdef?utm_source=linkedin&lvk=…` | `…/jobs/acme-12345/engineer-abcdef` |
+
+### Monster
+
+| Input | Output |
+|-------|--------|
+| `…/job-openings/engineer-acme--abc123?sid=…&jvo=…&utm_source=…` | `…/job-openings/engineer-acme--abc123` |
+| `job-openings.monster.com/v2/job/abc123?mstr_dist=true&utm_source=…` | `job-openings.monster.com/v2/job/abc123` |
+
+### Dice
+
+| Input | Output |
+|-------|--------|
+| `…/job-detail/abc123?utm_source=google&trid=…` | `…/job-detail/abc123` |
+| `…/jobs/detail/Engineer/Acme/abc123?utm_source=linkedin&src=…` | `…/jobs/detail/Engineer/Acme/abc123` |
+
+### Greenhouse
+
+| Input | Output |
+|-------|--------|
+| `boards.greenhouse.io/acme/jobs/123?gh_src=…` | `boards.greenhouse.io/acme/jobs/123` |
+| `boards.greenhouse.io/acme/jobs/123?gh_src=…&utm_source=…` | `boards.greenhouse.io/acme/jobs/123` |
+| `boards.greenhouse.io/embed/job_app?for=acme&token=123&gh_src=…` | `…?for=acme&token=123` |
+
+### Unknown domains (blocklist fallback)
+
+UTM params and other known trackers are stripped; unrecognised params are preserved.
+
+| Input | Output |
+|-------|--------|
+| `jobs.acme.com/job/eng-123?utm_source=linkedin&custom_id=456` | `jobs.acme.com/job/eng-123?custom_id=456` |
+
+---
+
 ## Running all tests
 
 ```bash
