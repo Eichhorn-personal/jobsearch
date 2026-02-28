@@ -186,7 +186,7 @@ router.post("/google", async (req, res) => {
   );
 
   log("USER_LOGIN", { email: user.username, source: "google" });
-  return res.json({ token, user: serializeUser(fullUser) });
+  return res.json({ token, user: serializeUser(fullUser), google_picture: payload.picture || null });
 });
 
 // POST /api/auth/logout

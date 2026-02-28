@@ -12,9 +12,12 @@ export function AuthProvider({ children }) {
     }
   });
 
-  const login = (token, userData) => {
+  const login = (token, userData, googlePicture = null) => {
     localStorage.setItem("authToken", token);
     localStorage.setItem("authUser", JSON.stringify(userData));
+    if (googlePicture) {
+      localStorage.setItem("authGooglePicture", googlePicture);
+    }
     setUser(userData);
   };
 
@@ -29,6 +32,7 @@ export function AuthProvider({ children }) {
     }
     localStorage.removeItem("authToken");
     localStorage.removeItem("authUser");
+    localStorage.removeItem("authGooglePicture");
     setUser(null);
   };
 

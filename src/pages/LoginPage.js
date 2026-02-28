@@ -35,7 +35,7 @@ export default function LoginPage() {
         return;
       }
       const data = await res.json();
-      login(data.token, data.user);
+      login(data.token, data.user, data.google_picture || null);
       navigate("/");
     } catch {
       setError("Network error — is the server running?");
