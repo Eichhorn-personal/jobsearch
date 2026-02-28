@@ -110,11 +110,23 @@ export default function LoginPage() {
       className="d-flex justify-content-center align-items-center"
       style={{ minHeight: "100vh" }}
     >
-      <Card style={{ width: "100%", maxWidth: 400 }} className="shadow-sm">
+      <Card
+        style={{
+          width: "100%",
+          maxWidth: 400,
+          border: "1px solid #e8eaed",
+          borderRadius: 12,
+          boxShadow: "0 2px 6px rgba(60,64,67,.15), 0 4px 12px rgba(60,64,67,.1)",
+        }}
+      >
         <Card.Body className="p-4">
-          <Card.Title as="h1" className="mb-4 text-center fs-4 fw-bold">
-            {mode === "login" ? "Sign in to JobTracker" : "Create account"}
-          </Card.Title>
+          <div className="text-center mb-4">
+            <img src="/logo192.png" alt="" width={48} height={48} style={{ borderRadius: "50%", marginBottom: 12 }} />
+            <Card.Title as="h1" className="fs-5 fw-500 mb-1" style={{ fontWeight: 400, color: "#202124" }}>
+              {mode === "login" ? "Sign in" : "Create account"}
+            </Card.Title>
+            <p className="text-muted small mb-0">to continue to JobTracker</p>
+          </div>
 
           <div aria-live="polite" aria-atomic="true">
             {error && <Alert variant="danger" role="alert">{error}</Alert>}

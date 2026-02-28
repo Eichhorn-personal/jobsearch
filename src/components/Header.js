@@ -1,4 +1,4 @@
-import { Navbar, Container, Button, Image, NavDropdown } from "react-bootstrap";
+import { Container, Image, NavDropdown } from "react-bootstrap";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -11,47 +11,42 @@ export default function Header() {
     navigate("/login");
   };
 
+  const avatarLetter = user?.username?.charAt(0)?.toUpperCase() || "?";
+
   return (
-    <Navbar expand="lg" aria-label="Main navigation" className="mb-4 border-bottom bg-body-tertiary">
-      <Container className="d-flex align-items-center">
+    <header className="gmail-header" aria-label="Main navigation">
+      <Container className="d-flex align-items-center h-100">
 
-        {/* Left: Logo + Title */}
-        <Navbar.Brand as={Link} to="/" className="d-flex align-items-center fw-bold fs-4">
-          <Image
-            src="/logo192.png"
-            alt=""
-            width={32}
-            height={32}
-            roundedCircle
-            className="me-2"
-          />
-          JobTracker
-        </Navbar.Brand>
+        {/* Left: Logo + App name */}
+        <Link to="/" className="d-flex align-items-center text-decoration-none" style={{ gap: 10 }}>
+          <Image src="/logo192.png" alt="" width={40} height={40} roundedCircle />
+          <span className="gmail-app-name">JobTracker</span>
+        </Link>
 
-        {/* Right: user menu or login */}
-        <div className="ms-auto d-flex align-items-center">
+        {/* Right: admin button + user avatar dropdown or sign-in */}
+        <div className="ms-auto d-flex align-items-center" style={{ gap: 8 }}>
+          {user?.role === "admin" && (
+            <button className="btn-toolbar-action" onClick={() => navigate("/admin")}>
+              Manage
+            </button>
+          )}
           {user ? (
-            <NavDropdown title={user.username} align="end" id="user-menu">
-              {user.role === "admin" && (
-                <>
-                  <NavDropdown.Item onClick={() => navigate("/admin")}>
-                    ⚙ Manage
-                  </NavDropdown.Item>
-                  <NavDropdown.Divider />
-                </>
-              )}
-              <NavDropdown.Item onClick={handleLogout}>
-                Logout
-              </NavDropdown.Item>
+            <NavDropdown
+              title={<span className="gmail-avatar" aria-label={`Account menu for ${user.username}`}>{avatarLetter}</span>}
+              align="end"
+              id="user-menu"
+            >
+              <NavDropdown.Header className="text-muted small">{user.username}</NavDropdown.Header>
+              <NavDropdown.Item onClick={handleLogout}>Sign out</NavDropdown.Item>
             </NavDropdown>
           ) : (
-            <Button variant="primary" size="sm" onClick={() => navigate("/login")}>
-              Login
-            </Button>
+            <button className="btn btn-primary btn-sm" onClick={() => navigate("/login")}>
+              Sign in
+            </button>
           )}
         </div>
 
       </Container>
-    </Navbar>
+    </header>
   );
 }

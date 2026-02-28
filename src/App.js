@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import Container from "react-bootstrap/Container";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import "./App.css";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import DataTable from "./components/DataTable";
@@ -43,7 +44,7 @@ export default function App() {
           element={
             <ProtectedRoute>
               <PageLayout>
-                <Container className="mt-4">
+                <Container className="pt-3">
                   <DataTable />
                 </Container>
               </PageLayout>

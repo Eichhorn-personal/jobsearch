@@ -6,9 +6,20 @@ import "../DataTable.css";
 
 const COLUMNS = ["Date", "Role", "Company", "Status"];
 
+function statusClass(status) {
+  const s = (status || "").toLowerCase();
+  if (s.includes("apply") || s.includes("applied")) return "status-applied";
+  if (s.includes("phone") || s.includes("screen")) return "status-phone-screen";
+  if (s.includes("interview")) return "status-interview";
+  if (s.includes("offer")) return "status-offer";
+  if (s.includes("reject")) return "status-rejected";
+  if (s.includes("withdraw")) return "status-withdrawn";
+  return "status-default";
+}
+
 // Fixed px width for constrained columns; flex for fluid ones
 const COL_STYLE = {
-  Date:    { width: 100,  flexShrink: 0 },
+  Date:    { width: 115,  flexShrink: 0 },
   Role:    { flex: 1,     minWidth: 80 },
   Company: { flex: 1,     minWidth: 80 },
   Status:  { width: 130,  flexShrink: 0 },
@@ -20,6 +31,7 @@ export default function DataTable() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [viewingRow, setViewingRow] = useState(null);
   const [confirmRow, setConfirmRow] = useState(null);
+  const [selectedRow, setSelectedRow] = useState(null);
   const { request } = useApi();
 
   // Load rows + dropdown options from API on mount — independently so one failure can't blank the other
@@ -76,10 +88,37 @@ export default function DataTable() {
     }
   };
 
+  const toggleSelect = (row) =>
+    setSelectedRow(prev => prev?.id === row.id ? null : row);
+
   return (
     <Container fluid className="p-0">
-      <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
-        <Button onClick={() => setShowAddModal(true)}>Add Job</Button>
+      <div style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+        <button className="btn-compose" onClick={() => setShowAddModal(true)}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          Add Job
+        </button>
+        {selectedRow && (
+          <>
+            <button
+              className="btn-toolbar-action"
+              onClick={() => setViewingRow(selectedRow)}
+              title="Edit selected record"
+            >
+              ✏ Edit
+            </button>
+            <button
+              className="btn-toolbar-action btn-toolbar-delete"
+              onClick={() => setConfirmRow(selectedRow)}
+              title="Delete selected record"
+            >
+              ✕ Delete
+            </button>
+          </>
+        )}
       </div>
 
       <AddJobModal
@@ -109,23 +148,25 @@ export default function DataTable() {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setConfirmRow(null)}>Cancel</Button>
-          <Button variant="danger" onClick={() => { deleteRow(confirmRow.id); setConfirmRow(null); }}>Delete</Button>
+          <Button variant="danger" onClick={() => { deleteRow(confirmRow.id); setConfirmRow(null); setSelectedRow(null); }}>Delete</Button>
         </Modal.Footer>
       </Modal>
 
       <div className="job-cards d-md-none" aria-label="Job applications">
         {rows.map(row => (
-          <div key={row.id} className="job-card">
+          <div
+            key={row.id}
+            className={`job-card${selectedRow?.id === row.id ? " job-card--selected" : ""}`}
+            onClick={() => toggleSelect(row)}
+            role="row"
+            aria-selected={selectedRow?.id === row.id}
+          >
             <div className="job-card-main">
               <div className="job-card-role">{row.Role || "—"}</div>
-              <div className="job-card-company text-muted small">{row.Company || ""}</div>
-              <div className="job-card-meta text-muted small">
+              <div className="job-card-company">{row.Company || ""}</div>
+              <div className="job-card-meta">
                 {[row.Status, row.Date].filter(Boolean).join(" · ")}
               </div>
-            </div>
-            <div className="job-card-actions">
-              <button className="btn btn-link job-card-btn" aria-label={`View or edit ${row.Role || "job"} at ${row.Company || "unknown company"}`} onClick={() => setViewingRow(row)}>👁</button>
-              <button className="btn btn-link job-card-btn" aria-label={`Delete ${row.Role || "job"} at ${row.Company || "unknown company"}`} onClick={() => setConfirmRow(row)}>🗑️</button>
             </div>
           </div>
         ))}
@@ -134,7 +175,6 @@ export default function DataTable() {
       <div className="sheet-scroll d-none d-md-block" role="table" aria-label="Job applications">
         <div role="rowgroup">
           <div className="sheet-grid sheet-header" role="row">
-            <div className="sheet-cell" role="columnheader" aria-label="Actions" style={{ width: 56, flexShrink: 0 }}></div>
             {COLUMNS.map(col => (
               <div key={col} className="sheet-cell" role="columnheader" style={COL_STYLE[col]}>
                 {col}
@@ -145,26 +185,22 @@ export default function DataTable() {
 
         <div role="rowgroup">
           {rows.map(row => (
-            <div key={row.id} className="sheet-grid" role="row">
-              <div className="sheet-cell" role="cell" style={{ width: 56, flexShrink: 0, justifyContent: "center", gap: 6, display: "flex" }}>
-                <button
-                  className="btn btn-sm btn-link p-0"
-                  style={{ fontSize: "15px", opacity: 0.6 }}
-                  aria-label={`View or edit ${row.Role || "job"} at ${row.Company || "unknown company"}`}
-                  onClick={() => setViewingRow(row)}
-                >👁</button>
-                <button
-                  className="btn btn-sm btn-link p-0"
-                  style={{ fontSize: "15px", opacity: 0.6 }}
-                  aria-label={`Delete ${row.Role || "job"} at ${row.Company || "unknown company"}`}
-                  onClick={() => setConfirmRow(row)}
-                >🗑️</button>
-              </div>
+            <div
+              key={row.id}
+              className={`sheet-grid sheet-row${selectedRow?.id === row.id ? " sheet-grid--selected" : ""}`}
+              role="row"
+              aria-selected={selectedRow?.id === row.id}
+              onClick={() => toggleSelect(row)}
+            >
               {COLUMNS.map(col => (
                 <div key={col} className="sheet-cell" role="cell" style={COL_STYLE[col]}>
-                  <span style={{ padding: "4px 6px", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {row[col] ?? ""}
-                  </span>
+                  {col === "Status" ? (
+                    <span className={`status-chip ${statusClass(row[col])}`}>{row[col] ?? ""}</span>
+                  ) : (
+                    <span style={{ padding: "4px 10px", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {row[col] ?? ""}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
