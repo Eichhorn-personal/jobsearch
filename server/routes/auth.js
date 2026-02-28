@@ -241,9 +241,19 @@ router.get("/me", authenticate, (req, res) => {
 
 // PUT /api/auth/profile
 router.put("/profile", authenticate, async (req, res) => {
-  let { display_name, photo, current_password, new_password, google_picture_url } = req.body;
+  const { display_name, photo, current_password, new_password, google_picture_url } = req.body;
 
-  // Server-side Google photo fetch (avoids browser CORS restrictions)
+  // Validate direct photo upload
+  if (photo !== undefined && photo !== null) {
+    if (typeof photo !== "string") {
+      return res.status(400).json({ error: "Invalid photo format" });
+    }
+    if (photo.length > 300 * 1024) {
+      return res.status(400).json({ error: "Photo must be 300 KB or smaller" });
+    }
+  }
+
+  // Validate google_picture_url (host check; actual fetch happens below)
   if (google_picture_url !== undefined) {
     if (typeof google_picture_url !== "string") {
       return res.status(400).json({ error: "Invalid google_picture_url" });
@@ -254,21 +264,6 @@ router.put("/profile", authenticate, async (req, res) => {
     }
     if (!parsedUrl.hostname.endsWith("googleusercontent.com")) {
       return res.status(400).json({ error: "Invalid google_picture_url" });
-    }
-    try {
-      photo = await fetchImageAsBase64(google_picture_url);
-    } catch {
-      return res.status(502).json({ error: "Could not fetch photo from Google" });
-    }
-  }
-
-  // Validate photo size
-  if (photo !== undefined && photo !== null) {
-    if (typeof photo !== "string") {
-      return res.status(400).json({ error: "Invalid photo format" });
-    }
-    if (photo.length > 300 * 1024) {
-      return res.status(400).json({ error: "Photo must be 300 KB or smaller" });
     }
   }
 
@@ -287,7 +282,6 @@ router.put("/profile", authenticate, async (req, res) => {
   if (new_password !== undefined) {
     const hasExistingPassword = !!(user.password);
     if (hasExistingPassword) {
-      // Require current password verification
       if (!current_password) {
         return res.status(400).json({ error: "Current password is required" });
       }
@@ -299,7 +293,8 @@ router.put("/profile", authenticate, async (req, res) => {
     newHash = await bcrypt.hash(new_password, 10);
   }
 
-  // Build update
+  // Build update — google_picture_url is fetched here so the result goes
+  // directly into params; no intermediate variable reassignment needed.
   const updates = [];
   const params = [];
 
@@ -310,6 +305,16 @@ router.put("/profile", authenticate, async (req, res) => {
   if (photo !== undefined) {
     updates.push("photo = ?");
     params.push(photo || null);
+  }
+  if (google_picture_url !== undefined) {
+    let fetchedPhoto;
+    try {
+      fetchedPhoto = await fetchImageAsBase64(google_picture_url);
+    } catch {
+      return res.status(502).json({ error: "Could not fetch photo from Google" });
+    }
+    updates.push("photo = ?");
+    params.push(fetchedPhoto);
   }
   if (newHash !== undefined) {
     updates.push("password = ?");
