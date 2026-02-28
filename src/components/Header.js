@@ -13,6 +13,10 @@ export default function Header() {
 
   const avatarLetter = user?.username?.charAt(0)?.toUpperCase() || "?";
 
+  const avatarTitle = user?.photo
+    ? <img src={user.photo} alt="" className="gmail-avatar" style={{ borderRadius: "50%", objectFit: "cover" }} aria-label={`Account menu for ${user.username}`} />
+    : <span className="gmail-avatar" aria-label={`Account menu for ${user.username}`}>{avatarLetter}</span>;
+
   return (
     <header className="gmail-header" aria-label="Main navigation">
       <Container className="d-flex align-items-center h-100">
@@ -32,11 +36,15 @@ export default function Header() {
           )}
           {user ? (
             <NavDropdown
-              title={<span className="gmail-avatar" aria-label={`Account menu for ${user.username}`}>{avatarLetter}</span>}
+              title={avatarTitle}
               align="end"
               id="user-menu"
             >
-              <NavDropdown.Header className="text-muted small">{user.username}</NavDropdown.Header>
+              <NavDropdown.Header className="text-muted small">
+                {user.display_name || user.username}
+              </NavDropdown.Header>
+              <NavDropdown.Item onClick={() => navigate("/profile")}>Edit Profile</NavDropdown.Item>
+              <NavDropdown.Divider />
               <NavDropdown.Item onClick={handleLogout}>Sign out</NavDropdown.Item>
             </NavDropdown>
           ) : (

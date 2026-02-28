@@ -21,7 +21,7 @@ app.use(cors({
     else cb(new Error("Not allowed by CORS"));
   },
 }));
-app.use(express.json({ limit: "16kb" }));
+app.use(express.json({ limit: "512kb" }));
 
 if (process.env.NODE_ENV !== "test") {
   const authLimiter = rateLimit({

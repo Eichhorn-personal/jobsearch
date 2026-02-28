@@ -8,6 +8,7 @@ import DataTable from "./components/DataTable";
 import LoginPage from "./pages/LoginPage";
 import AdminPage from "./pages/AdminPage";
 import LogsPage from "./pages/LogsPage";
+import ProfilePage from "./pages/ProfilePage";
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
@@ -69,6 +70,16 @@ export default function App() {
                 <LogsPage />
               </PageLayout>
             </AdminRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <PageLayout>
+                <ProfilePage />
+              </PageLayout>
+            </ProtectedRoute>
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />

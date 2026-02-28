@@ -69,6 +69,14 @@ if (!userCols.includes("role")) {
   db.exec("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'contributor'");
 }
 
+// Migration: add display_name and photo columns
+if (!userCols.includes("display_name")) {
+  db.exec("ALTER TABLE users ADD COLUMN display_name TEXT");
+}
+if (!userCols.includes("photo")) {
+  db.exec("ALTER TABLE users ADD COLUMN photo TEXT");
+}
+
 // Always ensure designated admin has admin role (handles fresh DBs where user didn't exist at migration time)
 const adminEmail = process.env.ADMIN_EMAIL;
 if (adminEmail) {
