@@ -118,6 +118,7 @@ router.get("/", authenticate, async (req, res) => {
   const timer = setTimeout(() => controller.abort(), 8000);
 
   try {
+    console.log(`[scrape] fetching ${parsed.href}`);
     const response = await fetch(parsed.href, {
       signal: controller.signal,
       redirect: "follow",
@@ -129,12 +130,18 @@ router.get("/", authenticate, async (req, res) => {
     });
     clearTimeout(timer);
 
-    if (!response.ok) return res.json({ role: null, company: null });
+    if (!response.ok) {
+      console.log(`[scrape] HTTP ${response.status} from ${parsed.hostname}`);
+      return res.json({ role: null, company: null });
+    }
 
     const html = (await response.text()).slice(0, 512 * 1024); // cap at 512 KB
-    res.json(extractJobData(html));
-  } catch {
+    const result = extractJobData(html);
+    console.log(`[scrape] result for ${parsed.hostname}:`, result);
+    res.json(result);
+  } catch (err) {
     clearTimeout(timer);
+    console.log(`[scrape] failed for ${parsed.href}: ${err.message}`);
     res.json({ role: null, company: null }); // network/timeout errors are non-fatal
   }
 });

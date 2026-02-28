@@ -34,6 +34,7 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
   const [dateError, setDateError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [scraping, setScraping] = useState(false);
+  const [scrapeNote, setScrapeNote] = useState(null); // "ok" | "empty" | null
   const { request } = useApi();
 
   const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
@@ -50,6 +51,7 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
     if (field === "Source Link") {
       const url = cleaned !== pasted ? cleaned : pasted;
       setScraping(true);
+      setScrapeNote(null);
       try {
         const res = await request(`/api/scrape?url=${encodeURIComponent(url)}`);
         if (res.ok) {
@@ -59,8 +61,14 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
             ...(role    && !prev.Role    ? { Role:    role    } : {}),
             ...(company && !prev.Company ? { Company: company } : {}),
           }));
+          setScrapeNote(role || company ? "ok" : "empty");
+        } else {
+          setScrapeNote("empty");
         }
-      } catch { /* network error — silently skip */ } finally {
+      } catch (err) {
+        console.error("[scrape] request failed:", err);
+        setScrapeNote("empty");
+      } finally {
         setScraping(false);
       }
     }
@@ -189,9 +197,15 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
                   type="url"
                   placeholder="https://"
                   value={form["Source Link"]}
-                  onChange={e => set("Source Link", e.target.value)}
+                  onChange={e => { set("Source Link", e.target.value); setScrapeNote(null); }}
                   onPaste={handleUrlPaste("Source Link")}
                 />
+                {scrapeNote === "ok" && (
+                  <div className="text-success small mt-1">✓ Role and company detected</div>
+                )}
+                {scrapeNote === "empty" && (
+                  <div className="text-muted small mt-1">Could not detect job details — please fill in manually</div>
+                )}
               </Form.Group>
             </Col>
             <Col sm={6}>
