@@ -119,28 +119,51 @@ router.post("/google", async (req, res) => {
     return res.status(403).json({ error: "Registration is not open for this email address" });
   }
 
-  // 1. Already linked to this Google account
-  let user = db.prepare("SELECT id, username, role FROM users WHERE google_id = ?").get(googleId);
+  // Atomically find-or-create the user for this Google account.
+  // The transaction prevents duplicate-user races when two devices log in simultaneously.
+  let wasCreated = false;
+  let wasLinked  = false;
 
-  if (!user) {
-    // 2. Existing account with matching email username — link it
-    const byEmail = db.prepare("SELECT id, username, role FROM users WHERE username = ?").get(email);
+  const findOrCreateUser = db.transaction(() => {
+    // 1. Already linked to this Google account
+    let u = db.prepare("SELECT id, username, role FROM users WHERE google_id = ?").get(googleId);
+    if (u) return u;
+
+    // 2. Existing account with matching email (case-insensitive) — link it
+    const byEmail = db
+      .prepare("SELECT id, username, role FROM users WHERE LOWER(username) = LOWER(?)")
+      .get(email);
     if (byEmail) {
       db.prepare("UPDATE users SET google_id = ? WHERE id = ?").run(googleId, byEmail.id);
-      user = db.prepare("SELECT id, username, role FROM users WHERE id = ?").get(byEmail.id);
-      log("GOOGLE_ACCOUNT_LINKED", { id: user.id, email });
+      wasLinked = true;
+      return db.prepare("SELECT id, username, role FROM users WHERE id = ?").get(byEmail.id);
     }
-  }
 
-  if (!user) {
-    // 3. Brand-new user — create one
-    const role = process.env.ADMIN_EMAIL && email.toLowerCase() === process.env.ADMIN_EMAIL.toLowerCase() ? "admin" : "contributor";
+    // 3. Brand-new user — INSERT OR IGNORE handles the rare simultaneous-login race
+    const role = process.env.ADMIN_EMAIL && email.toLowerCase() === process.env.ADMIN_EMAIL.toLowerCase()
+      ? "admin"
+      : "contributor";
     const result = db
-      .prepare("INSERT INTO users (username, password, google_id, role) VALUES (?, ?, ?, ?)")
-      .run(email, "", googleId, role);
-    user = db.prepare("SELECT id, username, role FROM users WHERE id = ?").get(result.lastInsertRowid);
-    log("USER_CREATED", { id: user.id, email, source: "google" });
-  }
+      .prepare("INSERT OR IGNORE INTO users (username, password, google_id, role) VALUES (?, ?, ?, ?)")
+      .run(email.toLowerCase(), "", googleId, role);
+
+    if (result.changes > 0) {
+      wasCreated = true;
+      return db.prepare("SELECT id, username, role FROM users WHERE id = ?").get(result.lastInsertRowid);
+    }
+
+    // INSERT was ignored (another request created the user between steps 1 and 3) — re-find
+    return (
+      db.prepare("SELECT id, username, role FROM users WHERE google_id = ?").get(googleId) ||
+      db.prepare("SELECT id, username, role FROM users WHERE LOWER(username) = LOWER(?)").get(email)
+    );
+  });
+
+  const user = findOrCreateUser();
+  if (!user) return res.status(500).json({ error: "Failed to sign in with Google" });
+
+  if (wasCreated) log("USER_CREATED", { id: user.id, email, source: "google" });
+  if (wasLinked)  log("GOOGLE_ACCOUNT_LINKED", { id: user.id, email });
 
   const token = jwt.sign(
     { sub: user.id, username: user.username, role: user.role },
