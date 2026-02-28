@@ -1,15 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Container, Button, Table, Badge, Spinner } from "react-bootstrap";
+import { Container, Spinner } from "react-bootstrap";
 import { useApi } from "../hooks/useApi";
+import "../DataTable.css";
 
-const EVENT_VARIANT = {
-  USER_CREATED: "primary",
-  USER_LOGIN:   "info",
-  USER_LOGOUT:  "secondary",
-  JOB_CREATED:  "success",
-  JOB_UPDATED:  "warning",
-  JOB_DELETED:  "danger",
+// Maps event type to the same chip-class system used for job statuses
+const EVENT_CHIP = {
+  USER_CREATED: "event-primary",
+  USER_LOGIN:   "event-info",
+  USER_LOGOUT:  "event-secondary",
+  JOB_CREATED:  "event-success",
+  JOB_UPDATED:  "event-warning",
+  JOB_DELETED:  "event-danger",
 };
 
 function formatTimestamp(ts) {
@@ -43,47 +45,58 @@ export default function LogsPage() {
   useEffect(() => { load(); }, [load]);
 
   return (
-    <Container className="mt-4" style={{ maxWidth: 860 }}>
-      <div className="d-flex align-items-center mb-4">
-        <Button variant="outline-secondary" size="sm" onClick={() => navigate("/admin")} className="me-3" aria-label="Back to admin">
+    <Container className="pt-3" style={{ maxWidth: 900 }}>
+
+      {/* Toolbar */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+        <button className="btn-toolbar-action" onClick={() => navigate("/admin")} aria-label="Back to admin">
           ← Back
-        </Button>
-        <h1 className="mb-0 flex-grow-1 h4">Activity Log</h1>
-        <Button variant="outline-secondary" size="sm" onClick={load}>Refresh</Button>
+        </button>
+        <h1 style={{ margin: 0, fontSize: 18, fontWeight: 400, color: "#5f6368", flexGrow: 1 }}>
+          Activity Log
+        </h1>
+        <button className="btn-toolbar-action" onClick={load}>
+          Refresh
+        </button>
       </div>
 
+      {/* Content */}
       <div aria-live="polite">
         {entries === null ? (
           <div className="text-center mt-5"><Spinner animation="border" /></div>
         ) : entries.length === 0 ? (
           <p className="text-muted">No log entries yet.</p>
         ) : (
-          <div className="table-responsive">
-          <Table hover size="sm" className="align-middle">
-            <caption className="visually-hidden">Activity log entries</caption>
-            <thead>
-              <tr>
-                <th scope="col" style={{ width: 180 }}>Time</th>
-                <th scope="col" style={{ width: 130 }}>Event</th>
-                <th scope="col">Details</th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((e, i) => (
-                <tr key={i}>
-                  <td className="text-muted small">{formatTimestamp(e.timestamp)}</td>
-                  <td className="small">
-                    <Badge bg={EVENT_VARIANT[e.event] || "secondary"} text={EVENT_VARIANT[e.event] === "warning" ? "dark" : undefined}>
-                      {e.event}
-                    </Badge>
-                  </td>
-                  <td className="small">
+          <div className="sheet-scroll" role="table" aria-label="Activity log entries">
+
+            {/* Header */}
+            <div className="sheet-grid sheet-header" role="row">
+              <div className="sheet-cell" role="columnheader" style={{ width: 190, flexShrink: 0 }}>Time</div>
+              <div className="sheet-cell" role="columnheader" style={{ width: 140, flexShrink: 0 }}>Event</div>
+              <div className="sheet-cell" role="columnheader" style={{ flex: 1, minWidth: 100 }}>Details</div>
+            </div>
+
+            {/* Rows */}
+            {entries.map((e, i) => (
+              <div key={i} className="sheet-grid" role="row">
+                <div className="sheet-cell" role="cell" style={{ width: 190, flexShrink: 0 }}>
+                  <span style={{ padding: "4px 10px", fontSize: 13, color: "#5f6368" }}>
+                    {formatTimestamp(e.timestamp)}
+                  </span>
+                </div>
+                <div className="sheet-cell" role="cell" style={{ width: 140, flexShrink: 0 }}>
+                  <span className={`status-chip ${EVENT_CHIP[e.event] || "event-secondary"}`}>
+                    {e.event}
+                  </span>
+                </div>
+                <div className="sheet-cell" role="cell" style={{ flex: 1, minWidth: 100, fontSize: 13 }}>
+                  <span style={{ padding: "4px 10px", overflow: "hidden" }}>
                     <EntryDetails data={e.data} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
+                  </span>
+                </div>
+              </div>
+            ))}
+
           </div>
         )}
       </div>
