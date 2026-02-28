@@ -160,7 +160,7 @@ export default function ProfilePage() {
       <form onSubmit={handleSubmit}>
 
         {/* Google photo import banner */}
-        {googlePicture && !googlePictureDismissed && (
+        {googlePicture && !googlePictureDismissed && !user?.photo && (
           <div className="admin-panel mb-3" style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", flexWrap: "wrap" }}>
             <img src={googlePicture} alt="" style={{ width: 40, height: 40, borderRadius: "50%", flexShrink: 0 }} />
             <span style={{ flex: 1, fontSize: 14, color: "#5f6368" }}>Import your Google profile photo?</span>
