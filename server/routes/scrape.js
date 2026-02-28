@@ -61,7 +61,15 @@ function parseTitleString(title) {
   }
   s = s.trim();
 
-  // "Role at Company"  (LinkedIn, Glassdoor)
+  // "Company hiring Role in Location"  (LinkedIn job listings)
+  const hiringM = s.match(/^(.+?)\s+hiring\s+(.+)$/i);
+  if (hiringM) {
+    const company = hiringM[1].trim();
+    const role = hiringM[2].replace(/\s+in\s+[^,]+(?:,\s*.+)?$/, "").trim();
+    return { role, company };
+  }
+
+  // "Role at Company"  (LinkedIn og:title, Glassdoor)
   const atM = s.match(/^(.+?)\s+at\s+(.+)$/i);
   if (atM) return { role: atM[1].trim(), company: atM[2].trim() };
 
