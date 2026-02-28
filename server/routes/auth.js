@@ -1,10 +1,47 @@
 const express = require("express");
+const https = require("https");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 const db = require("../db/database");
 const authenticate = require("../middleware/authenticate");
 const { log } = require("../logger");
+
+// Fetch a remote HTTPS image and return it as a base64 data URL.
+// Follows up to 3 redirects. Used for Google profile photo import.
+function fetchImageAsBase64(url) {
+  return new Promise((resolve, reject) => {
+    const attempt = (currentUrl, redirectsLeft) => {
+      if (!currentUrl.startsWith("https://")) {
+        return reject(new Error("Only HTTPS URLs allowed"));
+      }
+      https.get(currentUrl, (res) => {
+        if ([301, 302, 307, 308].includes(res.statusCode)) {
+          res.resume();
+          if (redirectsLeft <= 0) return reject(new Error("Too many redirects"));
+          const location = res.headers.location;
+          if (!location) return reject(new Error("Redirect with no location"));
+          const nextUrl = location.startsWith("http") ? location : new URL(location, currentUrl).toString();
+          return attempt(nextUrl, redirectsLeft - 1);
+        }
+        if (res.statusCode !== 200) {
+          res.resume();
+          return reject(new Error(`HTTP ${res.statusCode}`));
+        }
+        const mimeType = (res.headers["content-type"] || "image/jpeg").split(";")[0].trim();
+        const chunks = [];
+        res.on("data", (chunk) => chunks.push(chunk));
+        res.on("end", () => {
+          const buf = Buffer.concat(chunks);
+          if (buf.length > 300 * 1024) return reject(new Error("Image too large"));
+          resolve(`data:${mimeType};base64,${buf.toString("base64")}`);
+        });
+        res.on("error", reject);
+      }).on("error", reject);
+    };
+    attempt(url, 3);
+  });
+}
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -204,7 +241,26 @@ router.get("/me", authenticate, (req, res) => {
 
 // PUT /api/auth/profile
 router.put("/profile", authenticate, async (req, res) => {
-  const { display_name, photo, current_password, new_password } = req.body;
+  let { display_name, photo, current_password, new_password, google_picture_url } = req.body;
+
+  // Server-side Google photo fetch (avoids browser CORS restrictions)
+  if (google_picture_url !== undefined) {
+    if (typeof google_picture_url !== "string") {
+      return res.status(400).json({ error: "Invalid google_picture_url" });
+    }
+    let parsedUrl;
+    try { parsedUrl = new URL(google_picture_url); } catch {
+      return res.status(400).json({ error: "Invalid google_picture_url" });
+    }
+    if (!parsedUrl.hostname.endsWith("googleusercontent.com")) {
+      return res.status(400).json({ error: "Invalid google_picture_url" });
+    }
+    try {
+      photo = await fetchImageAsBase64(google_picture_url);
+    } catch {
+      return res.status(502).json({ error: "Could not fetch photo from Google" });
+    }
+  }
 
   // Validate photo size
   if (photo !== undefined && photo !== null) {

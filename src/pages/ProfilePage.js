@@ -64,55 +64,31 @@ export default function ProfilePage() {
     setGooglePictureDismissed(true);
   };
 
-  const handleImportGooglePhoto = () => {
+  const handleImportGooglePhoto = async () => {
     const url = googlePicture;
     if (!url) return;
-
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = async () => {
-      try {
-        const canvas = document.createElement("canvas");
-        canvas.width = 96;
-        canvas.height = 96;
-        const ctx = canvas.getContext("2d");
-        const scale = Math.max(96 / img.width, 96 / img.height);
-        const scaledW = img.width * scale;
-        const scaledH = img.height * scale;
-        const offsetX = (96 - scaledW) / 2;
-        const offsetY = (96 - scaledH) / 2;
-        ctx.drawImage(img, offsetX, offsetY, scaledW, scaledH);
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
-
-        setGooglePhotoImporting(true);
-        const res = await request("/api/auth/profile", {
-          method: "PUT",
-          body: JSON.stringify({ photo: dataUrl }),
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          setError(data.error || "Failed to import photo.");
-          return;
-        }
-        updateUser(data);
-        setPhoto(dataUrl);
-        localStorage.removeItem("authGooglePicture");
-        setGooglePictureDismissed(true);
-        setSuccess("Google photo imported.");
-      } catch {
-        setError("Could not load photo from Google. Try uploading one manually.");
-        localStorage.removeItem("authGooglePicture");
-        setGooglePictureDismissed(true);
-      } finally {
-        setGooglePhotoImporting(false);
+    setGooglePhotoImporting(true);
+    setError("");
+    try {
+      const res = await request("/api/auth/profile", {
+        method: "PUT",
+        body: JSON.stringify({ google_picture_url: url }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Failed to import photo.");
+        return;
       }
-    };
-    img.onerror = () => {
-      setError("Could not load photo from Google. Try uploading one manually.");
+      updateUser(data);
+      setPhoto(data.photo);
       localStorage.removeItem("authGooglePicture");
       setGooglePictureDismissed(true);
-    };
-    img.src = url;
+      setSuccess("Google photo imported.");
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setGooglePhotoImporting(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -185,9 +161,9 @@ export default function ProfilePage() {
 
         {/* Google photo import banner */}
         {googlePicture && !googlePictureDismissed && (
-          <div style={{ background: "#e8f0fe", border: "1px solid #4285f4", borderRadius: 6, padding: "12px 16px", fontSize: 14, marginBottom: 12, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <div className="admin-panel mb-3" style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", flexWrap: "wrap" }}>
             <img src={googlePicture} alt="" style={{ width: 40, height: 40, borderRadius: "50%", flexShrink: 0 }} />
-            <span style={{ flex: 1, color: "#1a73e8" }}>Import your Google profile photo?</span>
+            <span style={{ flex: 1, fontSize: 14, color: "#5f6368" }}>Import your Google profile photo?</span>
             <div style={{ display: "flex", gap: 8 }}>
               <button
                 type="button"
