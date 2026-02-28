@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Container, Card, Button, Form, InputGroup, Badge, Spinner, Table, Modal,
-} from "react-bootstrap";
+import { Container, Form, InputGroup, Button, Modal, Spinner } from "react-bootstrap";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../context/AuthContext";
+import "../DataTable.css";
 
 export default function AdminPage() {
   const { request } = useApi();
@@ -46,11 +45,21 @@ export default function AdminPage() {
     setConfirmDeleteUser(null);
   };
 
-  // { "Status": [{ id, label, sort_order }, ...], ... }
+  const handleDownload = async () => {
+    const res = await request("/api/jobs");
+    const data = await res.json();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "job-tracker-data.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const [dropdowns, setDropdowns] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [editValue, setEditValue] = useState("");
-  // per-field "new option" input values
   const [newValues, setNewValues] = useState({});
   const [newFieldName, setNewFieldName] = useState("");
   const [errors, setErrors] = useState({});
@@ -64,17 +73,13 @@ export default function AdminPage() {
 
   useEffect(() => { loadDropdowns(); }, [loadDropdowns]);
 
-  const setError = (key, msg) =>
-    setErrors((prev) => ({ ...prev, [key]: msg }));
-  const clearError = (key) =>
-    setErrors((prev) => { const n = { ...prev }; delete n[key]; return n; });
+  const setError = (key, msg) => setErrors((prev) => ({ ...prev, [key]: msg }));
+  const clearError = (key) => setErrors((prev) => { const n = { ...prev }; delete n[key]; return n; });
 
-  // ── Add option ───────────────────────────────────────────────
   const addOption = async (fieldName) => {
     const label = (newValues[fieldName] || "").trim();
     if (!label) return;
     clearError(`add-${fieldName}`);
-
     const res = await request(`/api/dropdowns/${encodeURIComponent(fieldName)}`, {
       method: "POST",
       body: JSON.stringify({ label }),
@@ -85,19 +90,14 @@ export default function AdminPage() {
       return;
     }
     const created = await res.json();
-    setDropdowns((prev) => ({
-      ...prev,
-      [fieldName]: [...(prev[fieldName] || []), created],
-    }));
+    setDropdowns((prev) => ({ ...prev, [fieldName]: [...(prev[fieldName] || []), created] }));
     setNewValues((prev) => ({ ...prev, [fieldName]: "" }));
   };
 
-  // ── Save inline edit ─────────────────────────────────────────
   const saveEdit = async (id, fieldName) => {
     const label = editValue.trim();
     if (!label) return;
     clearError(`edit-${id}`);
-
     const res = await request(`/api/dropdowns/option/${id}`, {
       method: "PUT",
       body: JSON.stringify({ label }),
@@ -115,7 +115,6 @@ export default function AdminPage() {
     setEditingId(null);
   };
 
-  // ── Delete option ─────────────────────────────────────────────
   const deleteOption = async (id, fieldName) => {
     const res = await request(`/api/dropdowns/option/${id}`, { method: "DELETE" });
     if (!res.ok) return;
@@ -125,23 +124,18 @@ export default function AdminPage() {
     }));
   };
 
-  // ── Reorder (swap adjacent) ───────────────────────────────────
   const moveOption = async (fieldName, index, direction) => {
     const options = [...dropdowns[fieldName]];
     const target = index + direction;
     if (target < 0 || target >= options.length) return;
     [options[index], options[target]] = [options[target], options[index]];
-
-    // Optimistic update
     setDropdowns((prev) => ({ ...prev, [fieldName]: options }));
-
     await request(`/api/dropdowns/${encodeURIComponent(fieldName)}/reorder`, {
       method: "PUT",
       body: JSON.stringify({ orderedIds: options.map((o) => o.id) }),
     });
   };
 
-  // ── Add new dropdown field (client-side; persists when first option is added) ──
   const addField = () => {
     const name = newFieldName.trim();
     if (!name) return;
@@ -155,102 +149,68 @@ export default function AdminPage() {
   };
 
   if (dropdowns === null) {
-    return (
-      <Container className="mt-5 text-center">
-        <Spinner animation="border" />
-      </Container>
-    );
+    return <Container className="mt-5 text-center"><Spinner animation="border" /></Container>;
   }
 
   return (
-    <Container className="mt-4" style={{ maxWidth: 620 }}>
+    <Container className="pt-3" style={{ maxWidth: 640 }}>
 
-      {/* Header row */}
-      <div className="d-flex flex-wrap align-items-center gap-2 mb-4">
-        <Button
-          variant="outline-secondary"
-          size="sm"
-          onClick={() => navigate("/")}
-          aria-label="Back to home"
-        >
+      {/* Toolbar */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+        <button className="btn-toolbar-action" onClick={() => navigate("/")} aria-label="Back to home">
           ← Back
-        </Button>
-        <h1 className="mb-0 flex-grow-1 h4">Manage Dropdown Options</h1>
-        <Button
-          variant="outline-secondary"
-          size="sm"
-          onClick={() => navigate("/logs")}
-        >
-          View Logs
-        </Button>
-        <Button
-          variant="outline-secondary"
-          size="sm"
-          onClick={async () => {
-            const res = await request("/api/jobs");
-            const data = await res.json();
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "job-tracker-data.json";
-            a.click();
-            URL.revokeObjectURL(url);
-          }}
-        >
-          Download Data
-        </Button>
+        </button>
+        <h1 style={{ margin: 0, fontSize: 18, fontWeight: 400, color: "#5f6368", flexGrow: 1 }}>
+          Manage
+        </h1>
+        <button className="btn-toolbar-action" onClick={() => navigate("/logs")}>View Logs</button>
+        <button className="btn-toolbar-action" onClick={handleDownload}>Download Data</button>
       </div>
 
-      {/* Users */}
-      <Card className="mb-4 shadow-sm">
-        <Card.Header className="fw-semibold">Users</Card.Header>
-        <Card.Body className="p-0">
-          <div aria-live="polite">
-            {users === null ? (
-              <div className="text-center p-3"><Spinner animation="border" size="sm" /></div>
-            ) : (
-              <div className="table-responsive">
-              <Table size="sm" className="mb-0 align-middle">
-                <thead className="table-light">
-                  <tr>
-                    <th scope="col" className="px-3">Email</th>
-                    <th scope="col" className="px-3" style={{ width: 160 }}>Role</th>
-                    <th scope="col" style={{ width: 40 }} aria-label="Actions"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map((u) => (
-                    <tr key={u.id}>
-                      <td className="px-3 small">{u.username}</td>
-                      <td className="px-3">
-                        <Form.Select
-                          size="sm"
-                          value={u.role}
-                          onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                          aria-label={`Role for ${u.username}`}
-                        >
-                          <option value="contributor">contributor</option>
-                          <option value="admin">admin</option>
-                        </Form.Select>
-                      </td>
-                      <td className="text-center">
-                        <button
-                          className="btn btn-sm btn-link p-0"
-                          style={{ fontSize: "15px", opacity: 0.6 }}
-                          aria-label={`Delete user ${u.username}`}
-                          onClick={() => setConfirmDeleteUser(u)}
-                        >🗑️</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
+      {/* Users panel */}
+      <div className="sheet-scroll mb-4" role="table" aria-label="Users">
+        <div className="admin-panel-header" role="rowgroup">
+          <span>Users</span>
+        </div>
+        {users === null ? (
+          <div className="text-center p-3"><Spinner animation="border" size="sm" /></div>
+        ) : (
+          <>
+            <div className="sheet-grid sheet-header" role="row">
+              <div className="sheet-cell" role="columnheader" style={{ flex: 1, justifyContent: "flex-start" }}>Email</div>
+              <div className="sheet-cell" role="columnheader" style={{ width: 155, flexShrink: 0 }}>Role</div>
+              <div className="sheet-cell" role="columnheader" style={{ width: 44, flexShrink: 0 }} aria-label="Actions" />
+            </div>
+            {users.map((u) => (
+              <div key={u.id} className="sheet-grid sheet-row" role="row">
+                <div className="sheet-cell" role="cell" style={{ flex: 1 }}>
+                  <span style={{ padding: "4px 10px", fontSize: 14 }}>{u.username}</span>
+                </div>
+                <div className="sheet-cell" role="cell" style={{ width: 155, flexShrink: 0, padding: "4px 8px" }}>
+                  <Form.Select
+                    size="sm"
+                    value={u.role}
+                    onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                    aria-label={`Role for ${u.username}`}
+                    style={{ fontSize: 13 }}
+                  >
+                    <option value="contributor">contributor</option>
+                    <option value="admin">admin</option>
+                  </Form.Select>
+                </div>
+                <div className="sheet-cell" role="cell" style={{ width: 44, flexShrink: 0, justifyContent: "center" }}>
+                  <button
+                    className="row-action-btn"
+                    onClick={() => setConfirmDeleteUser(u)}
+                    aria-label={`Delete user ${u.username}`}
+                    title="Delete user"
+                  >✕</button>
+                </div>
               </div>
-            )}
-          </div>
-        </Card.Body>
-      </Card>
+            ))}
+          </>
+        )}
+      </div>
 
       {/* Confirm delete user */}
       <Modal show={!!confirmDeleteUser} onHide={() => setConfirmDeleteUser(null)} centered aria-labelledby="confirm-delete-user-title">
@@ -272,125 +232,94 @@ export default function AdminPage() {
         </Modal.Footer>
       </Modal>
 
-      {/* One card per field */}
+      {/* One panel per dropdown field */}
       {Object.entries(dropdowns).map(([fieldName, options]) => (
-        <Card key={fieldName} className="mb-3 shadow-sm">
-          <Card.Header className="d-flex align-items-center justify-content-between fw-semibold">
-            {fieldName}
-            <Badge bg="secondary" pill>{options.length}</Badge>
-          </Card.Header>
+        <div key={fieldName} className="admin-panel">
+          <div className="admin-panel-header">
+            <span>{fieldName}</span>
+            <span className="status-chip status-withdrawn" style={{ fontSize: 11 }}>{options.length}</span>
+          </div>
 
-          <Card.Body className="p-0">
-            {options.length === 0 && (
-              <p className="text-muted small px-3 pt-3 mb-0">No options yet — add one below.</p>
-            )}
+          {options.length === 0 && (
+            <div className="text-muted small" style={{ padding: "10px 16px" }}>No options yet — add one below.</div>
+          )}
 
-            {options.map((opt, idx) => (
-              <div
-                key={opt.id}
-                className="d-flex align-items-center px-3 py-2 border-bottom"
-              >
-                {/* Up / Down arrows */}
-                <div className="d-flex flex-column me-2" style={{ gap: 1, minWidth: 18 }}>
-                  <button
-                    className="btn btn-link btn-sm p-0 lh-1 text-muted"
-                    style={{ fontSize: 11 }}
-                    disabled={idx === 0}
-                    onClick={() => moveOption(fieldName, idx, -1)}
-                    aria-label={`Move ${opt.label} up`}
-                  >▲</button>
-                  <button
-                    className="btn btn-link btn-sm p-0 lh-1 text-muted"
-                    style={{ fontSize: 11 }}
-                    disabled={idx === options.length - 1}
-                    onClick={() => moveOption(fieldName, idx, 1)}
-                    aria-label={`Move ${opt.label} down`}
-                  >▼</button>
-                </div>
-
-                {/* Label / inline editor */}
-                {editingId === opt.id ? (
-                  <div className="flex-grow-1">
-                    <InputGroup size="sm">
-                      <Form.Control
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") saveEdit(opt.id, fieldName);
-                          if (e.key === "Escape") setEditingId(null);
-                        }}
-                        isInvalid={!!errors[`edit-${opt.id}`]}
-                        aria-label={`Edit label for ${opt.label}`}
-                        aria-describedby={errors[`edit-${opt.id}`] ? `edit-err-${opt.id}` : undefined}
-                        autoFocus
-                      />
-                      <Button variant="success" size="sm" onClick={() => saveEdit(opt.id, fieldName)}>
-                        Save
-                      </Button>
-                      <Button variant="outline-secondary" size="sm" onClick={() => setEditingId(null)} aria-label="Cancel edit">
-                        ✕
-                      </Button>
-                    </InputGroup>
-                    {errors[`edit-${opt.id}`] && (
-                      <div id={`edit-err-${opt.id}`} className="text-danger small mt-1" role="alert">{errors[`edit-${opt.id}`]}</div>
-                    )}
-                  </div>
-                ) : (
-                  <>
-                    <span className="flex-grow-1">{opt.label}</span>
-                    <div className="d-flex gap-1">
-                      <Button
-                        size="sm"
-                        variant="outline-secondary"
-                        aria-label={`Edit option: ${opt.label}`}
-                        onClick={() => { setEditingId(opt.id); setEditValue(opt.label); }}
-                      >
-                        ✏️
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline-danger"
-                        aria-label={`Delete option: ${opt.label}`}
-                        onClick={() => deleteOption(opt.id, fieldName)}
-                      >
-                        🗑️
-                      </Button>
-                    </div>
-                  </>
-                )}
+          {options.map((opt, idx) => (
+            <div key={opt.id} className="admin-option-row">
+              {/* Up / down arrows */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 1, flexShrink: 0 }}>
+                <button className="arrow-btn" disabled={idx === 0} onClick={() => moveOption(fieldName, idx, -1)} aria-label={`Move ${opt.label} up`}>▲</button>
+                <button className="arrow-btn" disabled={idx === options.length - 1} onClick={() => moveOption(fieldName, idx, 1)} aria-label={`Move ${opt.label} down`}>▼</button>
               </div>
-            ))}
 
-            {/* Add option row */}
-            <div className="p-3">
-              <InputGroup size="sm">
-                <Form.Control
-                  placeholder="New option…"
-                  value={newValues[fieldName] || ""}
-                  onChange={(e) =>
-                    setNewValues((prev) => ({ ...prev, [fieldName]: e.target.value }))
-                  }
-                  onKeyDown={(e) => { if (e.key === "Enter") addOption(fieldName); }}
-                  isInvalid={!!errors[`add-${fieldName}`]}
-                  aria-label={`New option for ${fieldName}`}
-                  aria-describedby={errors[`add-${fieldName}`] ? `add-err-${fieldName}` : undefined}
-                />
-                <Button variant="primary" size="sm" onClick={() => addOption(fieldName)}>
-                  Add
-                </Button>
-              </InputGroup>
-              {errors[`add-${fieldName}`] && (
-                <div id={`add-err-${fieldName}`} className="text-danger small mt-1" role="alert">{errors[`add-${fieldName}`]}</div>
+              {editingId === opt.id ? (
+                <div style={{ flex: 1 }}>
+                  <InputGroup size="sm">
+                    <Form.Control
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveEdit(opt.id, fieldName);
+                        if (e.key === "Escape") setEditingId(null);
+                      }}
+                      isInvalid={!!errors[`edit-${opt.id}`]}
+                      aria-label={`Edit label for ${opt.label}`}
+                      autoFocus
+                    />
+                    <Button variant="success" size="sm" onClick={() => saveEdit(opt.id, fieldName)}>Save</Button>
+                    <Button variant="outline-secondary" size="sm" onClick={() => setEditingId(null)} aria-label="Cancel edit">✕</Button>
+                  </InputGroup>
+                  {errors[`edit-${opt.id}`] && (
+                    <div className="text-danger small mt-1">{errors[`edit-${opt.id}`]}</div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <span style={{ flex: 1 }}>{opt.label}</span>
+                  <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                    <button
+                      className="row-action-btn"
+                      style={{ opacity: 0.5 }}
+                      onClick={() => { setEditingId(opt.id); setEditValue(opt.label); }}
+                      aria-label={`Edit option: ${opt.label}`}
+                      title="Edit"
+                    >✏</button>
+                    <button
+                      className="row-action-btn"
+                      style={{ opacity: 0.5 }}
+                      onClick={() => deleteOption(opt.id, fieldName)}
+                      aria-label={`Delete option: ${opt.label}`}
+                      title="Delete"
+                    >✕</button>
+                  </div>
+                </>
               )}
             </div>
-          </Card.Body>
-        </Card>
+          ))}
+
+          <div className="admin-panel-footer">
+            <InputGroup size="sm">
+              <Form.Control
+                placeholder="New option…"
+                value={newValues[fieldName] || ""}
+                onChange={(e) => setNewValues((prev) => ({ ...prev, [fieldName]: e.target.value }))}
+                onKeyDown={(e) => { if (e.key === "Enter") addOption(fieldName); }}
+                isInvalid={!!errors[`add-${fieldName}`]}
+                aria-label={`New option for ${fieldName}`}
+              />
+              <Button variant="primary" size="sm" onClick={() => addOption(fieldName)}>Add</Button>
+            </InputGroup>
+            {errors[`add-${fieldName}`] && (
+              <div className="text-danger small mt-1" role="alert">{errors[`add-${fieldName}`]}</div>
+            )}
+          </div>
+        </div>
       ))}
 
       {/* Add new dropdown field */}
-      <Card className="mb-4 shadow-sm">
-        <Card.Body>
-          <Card.Subtitle className="mb-2 text-muted small">Add a new dropdown field</Card.Subtitle>
+      <div className="admin-panel">
+        <div className="admin-panel-header">Add New Dropdown Field</div>
+        <div className="admin-panel-footer">
           <InputGroup size="sm">
             <Form.Control
               placeholder="Field name (e.g. Priority, Job Type…)"
@@ -399,20 +328,15 @@ export default function AdminPage() {
               onKeyDown={(e) => { if (e.key === "Enter") addField(); }}
               isInvalid={!!errors.newField}
               aria-label="New dropdown field name"
-              aria-describedby={errors.newField ? "new-field-err" : undefined}
             />
-            <Button variant="outline-primary" size="sm" onClick={addField}>
-              Create
-            </Button>
+            <Button variant="outline-primary" size="sm" onClick={addField}>Create</Button>
           </InputGroup>
           {errors.newField && (
-            <div id="new-field-err" className="text-danger small mt-1" role="alert">{errors.newField}</div>
+            <div className="text-danger small mt-1" role="alert">{errors.newField}</div>
           )}
-          <div className="text-muted small mt-1">
-            The field will appear in the table once you add its first option.
-          </div>
-        </Card.Body>
-      </Card>
+          <div className="text-muted small mt-1">The field will appear in the table once you add its first option.</div>
+        </div>
+      </div>
 
     </Container>
   );
