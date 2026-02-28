@@ -8,6 +8,7 @@ const jobRoutes = require("./routes/jobs");
 const dropdownRoutes = require("./routes/dropdowns");
 const logRoutes = require("./routes/logs");
 const userRoutes = require("./routes/users");
+const scrapeRoutes = require("./routes/scrape");
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.use("/api/jobs", jobRoutes);
 app.use("/api/dropdowns", dropdownRoutes);
 app.use("/api/logs", logRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/scrape", scrapeRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(`[${new Date().toISOString()}] UNHANDLED_ERROR message="${err.message}"\n${err.stack}`);

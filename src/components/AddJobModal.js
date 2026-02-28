@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Modal, Button, Form, Row, Col } from "react-bootstrap";
+import { Modal, Button, Form, Row, Col, Spinner } from "react-bootstrap";
 import { formatDate, cleanJobUrl } from "../utils/dateFormat";
+import { useApi } from "../hooks/useApi";
 
 const today = () => {
   const d = new Date();
@@ -32,15 +33,36 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
   );
   const [dateError, setDateError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [scraping, setScraping] = useState(false);
+  const { request } = useApi();
 
   const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
-  const handleUrlPaste = (field) => (e) => {
+  const handleUrlPaste = (field) => async (e) => {
     const pasted = e.clipboardData.getData("text");
     const cleaned = cleanJobUrl(pasted);
     if (cleaned !== pasted) {
       e.preventDefault();
       set(field, cleaned);
+    }
+
+    // Auto-populate Role & Company from the job posting page
+    if (field === "Source Link") {
+      const url = cleaned !== pasted ? cleaned : pasted;
+      setScraping(true);
+      try {
+        const res = await request(`/api/scrape?url=${encodeURIComponent(url)}`);
+        if (res.ok) {
+          const { role, company } = await res.json();
+          setForm(prev => ({
+            ...prev,
+            ...(role    && !prev.Role    ? { Role:    role    } : {}),
+            ...(company && !prev.Company ? { Company: company } : {}),
+          }));
+        }
+      } catch { /* network error — silently skip */ } finally {
+        setScraping(false);
+      }
     }
   };
 
@@ -159,7 +181,10 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
           <Row className="mb-3">
             <Col sm={6}>
               <Form.Group>
-                <Form.Label>Source Link</Form.Label>
+                <Form.Label className="d-flex align-items-center gap-2">
+                  Source Link
+                  {scraping && <Spinner animation="border" size="sm" aria-label="Fetching job details" />}
+                </Form.Label>
                 <Form.Control
                   type="url"
                   placeholder="https://"
