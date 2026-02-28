@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, Form, Button, Alert, Container } from "react-bootstrap";
+import { Form, Container } from "react-bootstrap";
 import { GoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -110,26 +110,25 @@ export default function LoginPage() {
       className="d-flex justify-content-center align-items-center"
       style={{ minHeight: "100vh" }}
     >
-      <Card
-        style={{
-          width: "100%",
-          maxWidth: 400,
-          border: "1px solid #e8eaed",
-          borderRadius: 12,
-          boxShadow: "0 2px 6px rgba(60,64,67,.15), 0 4px 12px rgba(60,64,67,.1)",
-        }}
-      >
-        <Card.Body className="p-4">
+      <div className="admin-panel" style={{ width: "100%", maxWidth: 400, borderRadius: 12 }}>
+        <div style={{ padding: "32px 32px 24px" }}>
+
+          {/* Header */}
           <div className="text-center mb-4">
             <img src="/logo192.png" alt="" width={48} height={48} style={{ borderRadius: "50%", marginBottom: 12 }} />
-            <Card.Title as="h1" className="fs-5 fw-500 mb-1" style={{ fontWeight: 400, color: "#202124" }}>
+            <h1 style={{ fontSize: 20, fontWeight: 400, color: "#202124", margin: "0 0 4px" }}>
               {mode === "login" ? "Sign in" : "Create account"}
-            </Card.Title>
+            </h1>
             <p className="text-muted small mb-0">to continue to JobTracker</p>
           </div>
 
+          {/* Error */}
           <div aria-live="polite" aria-atomic="true">
-            {error && <Alert variant="danger" role="alert">{error}</Alert>}
+            {error && (
+              <div role="alert" style={{ background: "#fce8e6", color: "#c5221f", border: "1px solid #f5c2c0", borderRadius: 4, padding: "10px 12px", fontSize: 14, marginBottom: 16 }}>
+                {error}
+              </div>
+            )}
           </div>
 
           {/* Google button */}
@@ -151,7 +150,7 @@ export default function LoginPage() {
 
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-3">
-              <Form.Label>Email</Form.Label>
+              <Form.Label style={{ fontSize: 14 }}>Email</Form.Label>
               <Form.Control
                 type="email"
                 value={username}
@@ -162,7 +161,7 @@ export default function LoginPage() {
             </Form.Group>
 
             <Form.Group className="mb-4">
-              <Form.Label>Password</Form.Label>
+              <Form.Label style={{ fontSize: 14 }}>Password</Form.Label>
               <Form.Control
                 type="password"
                 value={password}
@@ -171,47 +170,31 @@ export default function LoginPage() {
               />
             </Form.Group>
 
-            <Button
-              type="submit"
-              variant="primary"
-              className="w-100"
-              disabled={loading}
-            >
-              {loading
-                ? "Please wait…"
-                : mode === "login"
-                ? "Sign in"
-                : "Create account"}
-            </Button>
+            <button type="submit" className="btn-login" disabled={loading}>
+              {loading ? "Please wait…" : mode === "login" ? "Sign in" : "Create account"}
+            </button>
           </Form>
 
           <div className="text-center mt-3 text-muted small">
             {mode === "login" ? (
               <>
                 No account?{" "}
-                <button
-                  type="button"
-                  className="btn btn-link btn-sm p-0"
-                  onClick={() => { setMode("register"); setError(""); }}
-                >
+                <button type="button" className="btn btn-link btn-sm p-0" onClick={() => { setMode("register"); setError(""); }}>
                   Register
                 </button>
               </>
             ) : (
               <>
                 Already have an account?{" "}
-                <button
-                  type="button"
-                  className="btn btn-link btn-sm p-0"
-                  onClick={() => { setMode("login"); setError(""); }}
-                >
+                <button type="button" className="btn btn-link btn-sm p-0" onClick={() => { setMode("login"); setError(""); }}>
                   Sign in
                 </button>
               </>
             )}
           </div>
-        </Card.Body>
-      </Card>
+
+        </div>
+      </div>
     </Container>
   );
 }

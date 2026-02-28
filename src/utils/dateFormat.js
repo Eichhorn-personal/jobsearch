@@ -6,7 +6,8 @@ const SITE_ALLOWLISTS = {
   "glassdoor.com":   new Set([]),       // job ID is in the path
   "ziprecruiter.com":new Set(["job"]),       // job ID is in the path
   "monster.com":     new Set([]),       // job ID is in the path
-  "dice.com":        new Set([]),       // job ID is in the path
+  "dice.com":        new Set([]),
+  "greenhouse.io":   new Set(["for", "token"]),       // job ID is in the path
 };
 
 const TRACKING_PARAMS = new Set([
