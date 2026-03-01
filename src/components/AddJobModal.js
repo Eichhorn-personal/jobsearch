@@ -152,7 +152,11 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
                   {isEditing && (
                     <Button
                       variant="outline-secondary"
-                      onClick={() => datePickerRef.current?.click()}
+                      onClick={() => {
+                        const el = datePickerRef.current;
+                        if (!el) return;
+                        try { el.showPicker(); } catch { el.click(); }
+                      }}
                       title="Pick a date"
                       aria-label="Open date picker"
                       style={{ zIndex: 0 }}
@@ -180,7 +184,7 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
                     type="date"
                     value={dateForPicker}
                     onChange={handleCalendarChange}
-                    style={{ display: "none" }}
+                    style={{ position: "absolute", opacity: 0, width: 1, height: 1, pointerEvents: "none" }}
                     tabIndex={-1}
                     aria-hidden="true"
                   />
