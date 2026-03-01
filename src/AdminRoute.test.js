@@ -1,20 +1,20 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { ThemeProvider } from "../context/ThemeContext";
-import App from "../App";
+import { ThemeProvider } from "./context/ThemeContext";
+import App from "./App";
 
 // Mock heavy components so we don't need full API setup
-jest.mock("../components/DataTable", () => () => (
+jest.mock("./components/DataTable", () => () => (
   <div data-testid="data-table" />
 ));
-jest.mock("../pages/AdminPage", () => () => (
+jest.mock("./pages/AdminPage", () => () => (
   <div data-testid="admin-page">Admin Page</div>
 ));
-jest.mock("../pages/LogsPage", () => () => (
+jest.mock("./pages/LogsPage", () => () => (
   <div data-testid="logs-page">Logs Page</div>
 ));
-jest.mock("../components/Header", () => () => null);
-jest.mock("../components/Footer", () => () => null);
+jest.mock("./components/Header", () => () => null);
+jest.mock("./components/Footer", () => () => null);
 jest.mock("@react-oauth/google", () => ({
   GoogleLogin: () => null,
 }));

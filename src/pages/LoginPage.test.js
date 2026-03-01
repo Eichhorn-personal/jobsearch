@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { ThemeProvider } from "../context/ThemeContext";
 import { AuthProvider } from "../context/AuthContext";
-import LoginPage from "../pages/LoginPage";
+import LoginPage from "./LoginPage";
 
 jest.mock("@react-oauth/google", () => ({
   GoogleLogin: () => <div data-testid="google-login" />,

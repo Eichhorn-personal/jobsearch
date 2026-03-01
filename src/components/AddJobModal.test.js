@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { AuthProvider } from "../context/AuthContext";
-import AddJobModal from "../components/AddJobModal";
+import AddJobModal from "./AddJobModal";
 
 // useApi calls useAuth internally; mock it so no AuthProvider is needed
 jest.mock("../hooks/useApi", () => ({

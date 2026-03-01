@@ -3,10 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { AuthProvider } from "../context/AuthContext";
 import { useApi } from "../hooks/useApi";
-import DataTable from "../components/DataTable";
+import DataTable from "./DataTable";
 
 jest.mock("../hooks/useApi", () => ({ useApi: jest.fn() }));
-jest.mock("../components/AddJobModal", () => () => null);
+jest.mock("./AddJobModal", () => () => null);
 
 const sampleJobs = [
   { id: 1, Role: "Engineer", Company: "Acme", Date: "01/15/2025", Status: "Applied" },

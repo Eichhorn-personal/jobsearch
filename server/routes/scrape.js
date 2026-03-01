@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const authenticate = require("../middleware/authenticate");
+const { log } = require("../logger");
 
 // ── HTML helpers ─────────────────────────────────────────────────
 
@@ -126,7 +127,7 @@ router.get("/", authenticate, async (req, res) => {
   const timer = setTimeout(() => controller.abort(), 8000);
 
   try {
-    console.log(`[scrape] fetching ${parsed.href}`);
+    log("SCRAPE_FETCH", { url: parsed.href });
     const response = await fetch(parsed.href, {
       signal: controller.signal,
       redirect: "follow",
@@ -139,17 +140,17 @@ router.get("/", authenticate, async (req, res) => {
     clearTimeout(timer);
 
     if (!response.ok) {
-      console.log(`[scrape] HTTP ${response.status} from ${parsed.hostname}`);
+      log("SCRAPE_HTTP_ERROR", { status: response.status, host: parsed.hostname });
       return res.json({ role: null, company: null });
     }
 
     const html = (await response.text()).slice(0, 512 * 1024); // cap at 512 KB
     const result = extractJobData(html);
-    console.log(`[scrape] result for ${parsed.hostname}:`, result);
+    log("SCRAPE_RESULT", { host: parsed.hostname, role: result.role, company: result.company });
     res.json(result);
   } catch (err) {
     clearTimeout(timer);
-    console.log(`[scrape] failed for ${parsed.href}: ${err.message}`);
+    log("SCRAPE_ERROR", { url: parsed.href, error: err.message });
     res.json({ role: null, company: null }); // network/timeout errors are non-fatal
   }
 });

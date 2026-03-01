@@ -28,15 +28,18 @@ jobtracker/
 │   ├── jobtracker.db               # SQLite database (gitignored, auto-created)
 │   ├── app.log                    # Activity log (gitignored, LOG_PATH overrides path)
 │   ├── db/
-│   │   └── database.js            # DB connection, schema creation, migrations, admin seeding
+│   │   ├── database.js            # DB connection, schema creation, migrations, admin seeding
+│   │   └── queries.js             # Shared helpers: serializeUser, findUserById
 │   ├── middleware/
-│   │   └── authenticate.js        # JWT verification; re-fetches role from DB
+│   │   ├── authenticate.js        # JWT verification; re-fetches role from DB
+│   │   └── requireAdmin.js        # 403 guard: rejects non-admin requests
 │   ├── routes/
 │   │   ├── auth.js                # POST /api/auth/login|register|logout|google, GET /api/auth/me, PUT /api/auth/profile
 │   │   ├── jobs.js                # GET|POST /api/jobs, PUT|DELETE /api/jobs/:id
 │   │   ├── users.js               # GET /api/users, PUT /api/users/:id/role, DELETE /api/users/:id
 │   │   ├── dropdowns.js           # GET /api/dropdowns, POST/PATCH/DELETE dropdown options
-│   │   └── logs.js                # GET /api/logs (admin only)
+│   │   ├── logs.js                # GET /api/logs (admin only)
+│   │   └── scrape.js              # GET /api/scrape — extract role/company from a job posting URL
 │   └── tests/
 │       ├── setup.js               # Creates in-memory SQLite DB for each test run
 │       ├── auth.test.js           # 14 tests — auth routes
@@ -48,6 +51,7 @@ jobtracker/
 ├── src/
 │   ├── App.js                     # Route definitions and layout wrapper
 │   ├── App.test.js                # Placeholder (CRA requires ≥1 test file in src/)
+│   ├── AdminRoute.test.js         # Route guard tests for /admin and /logs
 │   ├── index.js                   # React root: GoogleOAuthProvider, ThemeProvider, HashRouter
 │   ├── setupTests.js              # jest-dom matchers; TextEncoder/Decoder polyfill
 │   ├── setupProxy.js              # Dev proxy: /api/* → localhost:3001
@@ -55,9 +59,15 @@ jobtracker/
 │   │
 │   ├── components/
 │   │   ├── Header.js              # Navbar with logo, brand link, user dropdown
+│   │   ├── Header.test.js         # ARIA structure, role-based menu items
 │   │   ├── Footer.js              # Simple footer
 │   │   ├── DataTable.js           # Jobs table with add/edit/delete actions
-│   │   └── AddJobModal.js         # Modal form for adding and editing jobs
+│   │   ├── DataTable.test.js      # Table ARIA, action buttons, delete confirmation
+│   │   ├── AddJobModal.js         # Modal form for adding and editing jobs
+│   │   └── AddJobModal.test.js    # Modal ARIA, date validation, form submission
+│   │
+│   ├── constants/
+│   │   └── jobs.js                # ARCHIVED_STATUSES — statuses that move rows to the archived section
 │   │
 │   ├── context/
 │   │   ├── AuthContext.js         # User state; login/logout/updateUser; JWT + authUser in localStorage
@@ -68,16 +78,10 @@ jobtracker/
 │   │
 │   ├── pages/
 │   │   ├── LoginPage.js           # Email/password + Google OAuth login and register
+│   │   ├── LoginPage.test.js      # Heading, mode toggle, error display, accessibility
 │   │   ├── AdminPage.js           # User management, dropdown options, logs link, data export
 │   │   ├── LogsPage.js            # Activity log viewer (newest-first)
 │   │   └── ProfilePage.js         # Edit display name, photo (upload or Google import), password
-│   │
-│   ├── tests/                     # Frontend Jest + RTL tests
-│   │   ├── AdminRoute.test.js     # Route guard for /admin and /logs
-│   │   ├── AddJobModal.test.js    # Modal ARIA, date validation, form submission
-│   │   ├── DataTable.test.js      # Table ARIA, action buttons, delete confirmation
-│   │   ├── Header.test.js         # ARIA structure, role-based menu items
-│   │   └── LoginPage.test.js      # Heading, mode toggle, error display, accessibility
 │   │
 │   └── utils/
 │       ├── dateFormat.js          # formatDate(input) → "MM/DD/YYYY" or null; cleanJobUrl()

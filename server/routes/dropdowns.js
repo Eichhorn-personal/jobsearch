@@ -1,14 +1,10 @@
 const express = require("express");
 const db = require("../db/database");
 const authenticate = require("../middleware/authenticate");
+const requireAdmin = require("../middleware/requireAdmin");
 
 const router = express.Router();
 router.use(authenticate);
-
-const requireAdmin = (req, res, next) => {
-  if (req.user.role !== "admin") return res.status(403).json({ error: "Forbidden" });
-  next();
-};
 
 // GET /api/dropdowns
 // Returns all fields grouped: { "Status": [{ id, label, sort_order }, ...], ... }

@@ -5,12 +5,7 @@ const { log } = require("../logger");
 
 const router = express.Router();
 router.use(authenticate);
-
-// Admin-only guard
-router.use((req, res, next) => {
-  if (req.user.role !== "admin") return res.status(403).json({ error: "Forbidden" });
-  next();
-});
+router.use(require("../middleware/requireAdmin"));
 
 // GET /api/users
 router.get("/", (req, res) => {

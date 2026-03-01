@@ -3,11 +3,11 @@ import { Button, Container, Modal } from "react-bootstrap";
 import { useApi } from "../hooks/useApi";
 import AddJobModal from "./AddJobModal";
 import { statusClass } from "../utils/statusColor";
+import { ARCHIVED_STATUSES } from "../constants/jobs";
 import "../DataTable.css";
 
 const COLUMNS = ["Date", "Role", "Company", "Status"];
 
-const ARCHIVED_STATUSES = ["ghosted", "duplicate"];
 const isArchived = (row) => ARCHIVED_STATUSES.includes((row.Status || "").toLowerCase());
 
 function Chevron({ open }) {

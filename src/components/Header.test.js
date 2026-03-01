@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { AuthProvider } from "../context/AuthContext";
 import { ThemeProvider } from "../context/ThemeContext";
-import Header from "../components/Header";
+import Header from "./Header";
 
 function renderHeader(user = null) {
   if (user) {

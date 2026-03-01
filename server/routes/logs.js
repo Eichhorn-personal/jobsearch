@@ -5,10 +5,7 @@ const authenticate = require("../middleware/authenticate");
 
 const router = express.Router();
 router.use(authenticate);
-router.use((req, res, next) => {
-  if (req.user.role !== "admin") return res.status(403).json({ error: "Forbidden" });
-  next();
-});
+router.use(require("../middleware/requireAdmin"));
 
 const logPath = process.env.LOG_PATH || path.join(__dirname, "..", "app.log");
 
