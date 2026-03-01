@@ -28,6 +28,8 @@ Open http://localhost:3000 in your browser.
 | `npm test` | Frontend unit tests (Jest + RTL, watch mode) |
 | `npm run test:e2e` | Playwright E2E tests (headless) |
 | `npm run test:e2e:ui` | Playwright E2E tests (interactive UI) |
+| `npm run test:all` | Run all three test suites; write timestamped log to `test-results/` |
+| `cd server && npm test` | Backend API tests only (Jest + Supertest) |
 | `npm run build` | Production build |
 | `npm run deploy` | Build and deploy to GitHub Pages |
 | `cd server && npm test` | Backend API tests (Jest + Supertest) |
