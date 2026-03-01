@@ -1,4 +1,4 @@
-app = 'jobtracker'
+app = 'jobtracker-dctgiw'
 primary_region = 'iad'
 
 [build]
