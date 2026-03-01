@@ -13,7 +13,10 @@ jobtracker/
 │   ├── helpers.js                 # Shared auth helpers and API mocks
 │   ├── auth.spec.js               # Login, logout, redirect flows
 │   ├── jobs.spec.js               # Job CRUD interactions
-│   └── navigation.spec.js        # Role-based nav, admin routes, skip link
+│   ├── navigation.spec.js        # Role-based nav, admin routes, skip link
+│   ├── mobile.spec.js             # Mobile layout and card interactions (Pixel 5 viewport)
+│   ├── archived.spec.js           # Collapsible archived table (Ghosted / Duplicate rows)
+│   └── search.spec.js             # Search field filtering (role, company, clear, archived)
 │
 ├── public/                        # CRA static assets
 │
@@ -77,7 +80,8 @@ jobtracker/
 │   │   └── LoginPage.test.js      # Heading, mode toggle, error display, accessibility
 │   │
 │   └── utils/
-│       └── dateFormat.js          # formatDate(input) → "MM/DD/YYYY" or null
+│       ├── dateFormat.js          # formatDate(input) → "MM/DD/YYYY" or null; cleanJobUrl()
+│       └── statusColor.js         # statusClass(status) → CSS class; STATUS_COLORS picker list
 │
 ├── playwright.config.js           # Playwright config; auto-starts CRA on port 3000
 ├── package.json                   # Frontend deps + npm scripts (including test:e2e)

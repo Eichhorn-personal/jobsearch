@@ -87,7 +87,7 @@ Role is **re-fetched from the database on every request** (not just read from th
 |-------|-------------|
 | `users` | `id`, `username`, `password`, `google_id`, `role` (default `contributor`), `display_name`, `photo` (base64 data URL) |
 | `jobs` | `id`, `user_id → users.id CASCADE`, all job fields |
-| `dropdown_options` | `id`, `field_name`, `label`, `sort_order` |
+| `dropdown_options` | `id`, `field_name`, `label`, `sort_order`, `color` (CSS class name, nullable) |
 
 **Admin seeding**: If `ADMIN_EMAIL` env var is set, the corresponding user's role is forced to `admin` every time the server starts. This handles ephemeral databases (e.g., Render free tier) where the DB is wiped on redeploy.
 

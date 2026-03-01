@@ -106,14 +106,24 @@ Simple footer rendered at the bottom of every page via `PageLayout`.
 
 Main job-tracking table.
 
-**Columns**: Date (100 px fixed), Role (flex), Company (flex), Status (130 px fixed), plus an icon column (56 px fixed) for action buttons.
+**Columns**: Date (115 px fixed), Role (flex), Company (flex), Status (130 px fixed).
+
+**Row split**: Rows with `Status = "Ghosted"` or `"Duplicate"` (case-insensitive) are separated into an **Archived** section below the main table. The archived section is collapsed by default and toggled with a chevron button.
+
+**Search**: A pill-shaped search box filters both the main and archived tables simultaneously by Role or Company substring (case-insensitive). Filtered rows are not rendered.
+
+**Row selection model**: Clicking a row selects it (highlights it and sets `selectedRow`). Toolbar "✏ Edit" and "✕ Delete" buttons appear when a row is selected. There are no per-row action buttons.
 
 **State**
 
 | State | Description |
 |-------|-------------|
-| `rows` | Array of job objects loaded from `GET /api/jobs` |
-| `dropdownOptions` | Options per field from `GET /api/dropdowns` |
+| `rows` | Array of all job objects loaded from `GET /api/jobs` |
+| `dropdownOptions` | Label lists per field from `GET /api/dropdowns` |
+| `statusColorMap` | `{ [label]: cssClass }` map built from Status options' stored `color` values |
+| `searchTerm` | Current search string (filters both tables live) |
+| `showArchived` | Boolean — whether the archived table is expanded |
+| `selectedRow` | Currently selected row object, or null |
 | `showAddModal` | Boolean — controls AddJobModal in add mode |
 | `viewingRow` | Row object — controls AddJobModal in edit mode |
 | `confirmRow` | Row object — controls the delete-confirmation modal |
@@ -126,13 +136,15 @@ Main job-tracking table.
 | `handleSaveJob(formData)` | Updates `rows` optimistically, then PUTs to `/api/jobs/:id` |
 | `deleteRow(id)` | Removes from `rows` optimistically, then DELETEs `/api/jobs/:id` |
 
+**Status chip color**: Each chip uses the stored CSS class from `statusColorMap` if one has been saved via the admin page; otherwise falls back to `statusClass()` pattern matching.
+
 **ARIA structure**
 
-The custom table uses `role="table"` / `role="rowgroup"` / `role="row"` / `role="columnheader"` / `role="cell"` divs. The table has `aria-label="Job applications"`.
+The custom table uses `role="table"` / `role="rowgroup"` / `role="row"` / `role="columnheader"` / `role="cell"` divs.
 
-Action buttons have descriptive `aria-label` values:
-- Eye button: `View or edit {Role} at {Company}`
-- Delete button: `Delete {Role} at {Company}`
+- Main table: `aria-label="Job applications"`
+- Archived table (when expanded): `aria-label="Archived job applications"`
+- Archived toggle button: `aria-expanded` reflects open/closed state
 
 ---
 
@@ -183,7 +195,7 @@ Admin-only management console. Accessible at `/#/admin`.
 
 Sections:
 1. **Users** — table of all users; role dropdown (saves on change); delete button (confirms, cascades to jobs; cannot delete own account)
-2. **Dropdown options** — add/rename/reorder/delete options per field (e.g. Status values)
+2. **Dropdown options** — add/rename/reorder/delete options per field. For the **Status** field specifically, each option row also shows a chip preview and a color `<select>` (Auto / Blue / Orange / Green / Red / Grey). Changing the select immediately PUTs `{ color }` to `/api/dropdowns/option/:id` and updates both the preview and the main DataTable chips.
 3. **Download Data** — exports all jobs as a JSON file
 4. **View Logs** — navigates to `/#/logs`
 
@@ -213,6 +225,32 @@ On submit: `PUT /api/auth/profile` → on success calls `updateUser(data)` to sy
 ---
 
 ## Utilities
+
+### `statusColor.js` — `src/utils/statusColor.js`
+
+Shared between `DataTable` and `AdminPage`.
+
+#### `statusClass(status)`
+
+```js
+import { statusClass } from "../utils/statusColor";
+statusClass("Applied")      // → "status-applied"
+statusClass("Interviewing") // → "status-interview"
+statusClass("Ghosted")      // → "status-default"
+```
+
+Pattern-based fallback: inspects the lowercase status string for keywords (`apply`, `phone`, `screen`, `interview`, `offer`, `reject`, `withdraw`) and returns the matching CSS class. Used when no explicit `color` has been stored for a dropdown option.
+
+#### `STATUS_COLORS`
+
+```js
+import { STATUS_COLORS } from "../utils/statusColor";
+// [{ value: "", label: "Auto" }, { value: "status-applied", label: "Blue" }, ...]
+```
+
+Ordered list of color choices shown in the AdminPage color picker `<select>`. The empty-string `value` means "Auto" (fall back to `statusClass()`).
+
+---
 
 ### `dateFormat.js` — `src/utils/dateFormat.js`
 

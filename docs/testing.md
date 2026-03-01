@@ -4,9 +4,14 @@ Three test layers cover the full stack:
 
 | Layer | Tool | Count | Command |
 |-------|------|-------|---------|
-| Backend API | Jest + Supertest | 86+ tests | `cd server && npm test` |
-| Frontend components | Jest + React Testing Library | 35+ tests | `npm test` |
-| End-to-end | Playwright | 21 tests | `npm run test:e2e` |
+| Backend API | Jest + Supertest | 86 tests | `cd server && npm test` |
+| Frontend components | Jest + React Testing Library | 37 tests | `npm test` |
+| End-to-end | Playwright | 43 tests | `npm run test:e2e` |
+
+Run all three suites together with a timestamped log:
+```bash
+npm run test:all   # node scripts/run-tests.js
+```
 
 ---
 
@@ -107,7 +112,7 @@ The tests import the Express `app` directly (from `server/app.js`) and use Super
 
 | Test | What it verifies |
 |------|-----------------|
-| Renders "Sign in to JobTracker" heading | `role="heading"` present |
+| Renders "Sign in" heading | `role="heading"` with text `/^sign in$/i` present |
 | Toggle to register mode | heading changes to "Create account" |
 | Toggle back to sign in | heading reverts |
 | Error from API shown in alert | `role="alert"` contains error text |
@@ -198,18 +203,18 @@ The tests import the Express `app` directly (from `server/app.js`) and use Super
 | `CONTRIBUTOR` / `ADMIN` | Fixture user objects |
 | `SAMPLE_JOBS` | Two fixture job rows used in all job tests |
 
-### `auth.spec.js` — 5 tests
+### `auth.spec.js` — 6 tests
 
 | Test | Flow |
 |------|------|
 | Unauthenticated → redirected to `/#/login` | Navigate to `/#/`; assert URL |
-| "Sign in to JobTracker" heading renders | Navigate to `/#/login`; assert heading |
-| Toggle to register mode | Click Register button; assert heading changes |
-| Successful login redirects home | Fill form; submit; assert URL and username in header |
+| "Sign in" heading renders | Navigate to `/#/login`; assert heading |
+| Toggle to register mode | Click Register button; assert "Create account" heading |
+| Successful login redirects home and shows avatar | Fill form; submit; assert URL and avatar aria-label in header |
 | Invalid credentials shows error alert | Mock 401; fill form; submit; assert alert text |
-| Logout returns to `/#/login` | Click username dropdown → Logout; assert URL |
+| Sign out returns to `/#/login` | Click avatar → Sign out; assert URL |
 
-### `jobs.spec.js` — 10 tests
+### `jobs.spec.js` — 9 tests
 
 Each test starts with auth pre-seeded and waits for the job table to be visible.
 
@@ -219,16 +224,17 @@ Each test starts with auth pre-seeded and waits for the job table to be visible.
 | Table has correct column headers | Assert Date, Role, Company, Status columnheaders |
 | Opens Add Job modal | Click Add Job; assert dialog + modal title |
 | Submit add form → new row appears | Fill Role + Company; submit; assert new text in table |
-| Delete icon shows confirmation dialog | Click trash button; assert dialog + title |
-| Cancel delete keeps the row | Click trash → Cancel; assert button still visible |
-| Confirm delete removes the row | Click trash → Delete (exact); assert button gone |
-| Eye icon opens modal pre-filled | Click eye; assert dialog title "Edit Job" + input values |
-| Saving edit updates row | Click eye; change Role; Save Changes; assert new text in table |
+| Delete toolbar button shows confirmation dialog | Click row to select; click ✕ Delete; assert dialog + title |
+| Cancel delete keeps the row | Select row → Delete → Cancel; assert row still in table |
+| Confirm delete removes the row | Select row → Delete → Delete (exact match); assert row gone |
+| Edit toolbar button opens modal pre-filled | Select row → ✏ Edit; assert "Edit Job" title + input values |
+| Saving edit updates row inline | Select row → Edit; change Role; Save Changes; assert updated text |
 
-> **ARIA notes for selectors**:
-> - `Modal.Title` renders as `<div class="modal-title h4">`, not an `<h>` element — use `.locator(".modal-title")`
-> - Action cell aria-labels include job names as substrings — use `{ name: "Delete", exact: true }` for the confirm button; use `getByText(job.Role, { exact: true })` for cell content
-> - `Form.Group` has no `controlId` — labels aren't associated with inputs — select text inputs by `nth()` index (Date=0, Role=1, Company=2)
+> **ARIA / selector notes**:
+> - `Modal.Title` renders as `<div class="modal-title h4">` — use `.locator(".modal-title")`
+> - Row selection: `table.getByRole("row").filter({ hasText: /.../ }).click()` then click toolbar button
+> - Confirm delete button: `{ name: "Delete", exact: true }` to avoid matching the toolbar button
+> - `Form.Group` has no `controlId` — select text inputs by `nth()` index (Date=0, Role=1, Company=2)
 
 ### `navigation.spec.js` — 6 tests
 
@@ -236,10 +242,51 @@ Each test starts with auth pre-seeded and waits for the job table to be visible.
 |------|------|
 | Contributor visiting `/#/admin` → redirected to `/#/` | Navigate; assert URL |
 | Contributor visiting `/#/logs` → redirected to `/#/` | Navigate; assert URL |
-| Admin sees Manage item in dropdown | Click username; assert "Manage" visible |
-| Contributor does not see Manage item | Click username; assert "Logout" visible, "Manage" not visible |
-| Manage link navigates to `/#/admin` | Click username → Manage; assert URL |
+| Admin sees standalone Manage button in header | Navigate to `/#/`; assert button visible (no dropdown needed) |
+| Contributor does not see Manage button | Open account dropdown; confirm Sign out visible; assert no Manage button |
+| Manage button navigates to `/#/admin` | Click Manage; assert URL |
 | Skip link is present in DOM | Assert skip-to-content link attached |
+
+### `mobile.spec.js` — 4 tests
+
+Run at Pixel 5 viewport (393 × 851 px). Each test pre-seeds auth and waits for `.job-card`.
+
+| Test | Flow |
+|------|------|
+| Card list visible, desktop table hidden | Assert `.job-cards` visible; `.sheet-scroll` hidden |
+| Footer visible without scrolling | Assert footer bounding box fits within viewport height |
+| Tap card + Edit opens edit modal | Tap `.job-card`; click Edit toolbar button; assert dialog visible |
+| Tap card + Delete shows confirmation dialog | Tap `.job-card`; click Delete; assert dialog + "Delete Record" text |
+
+### `archived.spec.js` — 7 tests
+
+Uses extended job fixture: `SAMPLE_JOBS` + one Ghosted row + one Duplicate row.
+
+| Test | Flow |
+|------|------|
+| Archived rows absent from main table | Assert "Phantom Dev" / "Copy of Eng" not visible in main table |
+| Active rows remain in main table | Assert "Engineer" / "Designer" visible in main table |
+| Toggle visible and `aria-expanded="false"` by default | Assert button present; assert attribute |
+| Archived table not in DOM when collapsed | `not.toBeAttached()` on archived table |
+| Clicking toggle expands and shows archived rows | Click toggle; assert table visible + row texts |
+| Clicking toggle again collapses the table | Click toggle twice; assert table detached; attribute resets |
+| Toggle absent when no archived jobs | Use default `SAMPLE_JOBS`; assert `button.archived-toggle` not attached |
+
+### `search.spec.js` — 11 tests
+
+| Test | Flow |
+|------|------|
+| Search input is visible | Assert `aria-label="Search jobs"` input visible |
+| Filter by role shows matching row, hides others | Fill "engineer"; assert Engineer visible, Designer hidden |
+| Filter by company shows matching row, hides others | Fill "globex"; assert Designer visible, Engineer hidden |
+| Search is case-insensitive | Fill "ACME"; assert Engineer visible |
+| Non-matching search hides all rows | Fill "zzz-no-match"; assert both rows hidden |
+| Clear button absent when field is empty | Assert `aria-label="Clear search"` not attached |
+| Clear button appears once field has text | Fill "eng"; assert clear button visible |
+| Clear restores all rows and empties field | Fill → clear click; assert both rows visible; input value empty |
+| Search hides non-matching archived rows | Expand archived; fill "engineer"; assert archived row hidden |
+| Search matching archived row keeps it visible | Fill "phantom"; assert archived row visible |
+| Clearing search restores archived rows | Fill then clear; assert archived row returns |
 
 ---
 

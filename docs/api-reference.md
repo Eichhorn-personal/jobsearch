@@ -260,7 +260,9 @@ Manage the dropdown option lists shown in the Add/Edit job form.
 
 Return all dropdown options grouped by field name. **Auth**: Required (any role).
 
-**Response**: `{ "Status": [{ "id": 1, "label": "Applied", "sort_order": 0 }, ...], ... }`
+**Response**: `{ "Status": [{ "id": 1, "label": "Applied", "sort_order": 0, "color": null }, ...], ... }`
+
+Each option includes a `color` field — a CSS class name (e.g. `"status-applied"`) or `null` for auto-detection.
 
 ---
 
@@ -270,27 +272,27 @@ Add a new option to a field. **Auth**: Admin only.
 
 **Body**: `{ "label": "Screening" }`
 
-**Response**: 201 — created option object
+**Response**: 201 — `{ "id": 5, "label": "Screening", "sort_order": 4, "color": null }`
 
 ---
 
-### `PATCH /api/dropdowns/option/:id`
+### `PUT /api/dropdowns/option/:id`
 
-Rename an option. **Auth**: Admin only.
+Rename and/or set the chip color for an option. At least one field must be provided. **Auth**: Admin only.
 
-**Body**: `{ "label": "New label" }`
+**Body**: `{ "label": "New label", "color": "status-applied" }` — both fields optional; omit either to leave it unchanged. Send `"color": ""` or `"color": null` to reset to auto.
 
-**Response**: 200 — updated option object
+**Response**: 200 — updated option object (includes `color`)
 
 ---
 
-### `PATCH /api/dropdowns/option/:id/order`
+### `PUT /api/dropdowns/:fieldName/reorder`
 
-Change sort position of an option. **Auth**: Admin only.
+Bulk-update sort order. **Auth**: Admin only.
 
-**Body**: `{ "direction": "up" }` or `{ "direction": "down" }`
+**Body**: `{ "orderedIds": [3, 1, 2] }` — array of option IDs in desired display order.
 
-**Response**: 200
+**Response**: 200 — `{ "ok": true }`
 
 ---
 
