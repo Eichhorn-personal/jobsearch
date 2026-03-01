@@ -46,6 +46,16 @@ function fetchImageAsBase64(url) {
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+function createSampleJob(userId) {
+  const today = new Date();
+  const date = `${String(today.getMonth() + 1).padStart(2, "0")}/${String(today.getDate()).padStart(2, "0")}/${today.getFullYear()}`;
+  db.prepare(`
+    INSERT INTO jobs (user_id, date, role, company, source_link, company_link,
+                      resume, cover_letter, status, recruiter, hiring_mgr, panel, hr, comments)
+    VALUES (?, ?, ?, ?, ?, '', 0, 0, 'Applied', '', '', '', '', '')
+  `).run(userId, date, "<sample role>", "<sample company>", "<paste job board link here>");
+}
+
 const router = express.Router();
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -85,6 +95,7 @@ router.post("/register", async (req, res) => {
     const stmt = db.prepare("INSERT INTO users (username, password) VALUES (?, ?)");
     const result = stmt.run(username, hash);
     log("USER_CREATED", { id: result.lastInsertRowid, email: username, source: "password" });
+    createSampleJob(result.lastInsertRowid);
     return res.status(201).json({ id: result.lastInsertRowid, username });
   } catch (err) {
     if (err.message.includes("UNIQUE")) {
@@ -200,7 +211,10 @@ router.post("/google", async (req, res) => {
   const user = findOrCreateUser();
   if (!user) return res.status(500).json({ error: "Failed to sign in with Google" });
 
-  if (wasCreated) log("USER_CREATED", { id: user.id, email, source: "google" });
+  if (wasCreated) {
+    log("USER_CREATED", { id: user.id, email, source: "google" });
+    createSampleJob(user.id);
+  }
   if (wasLinked)  log("GOOGLE_ACCOUNT_LINKED", { id: user.id, email });
 
   // For Google users we need the password field to compute has_password
