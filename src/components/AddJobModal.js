@@ -75,8 +75,8 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
         const { role, company } = await res.json();
         setForm(prev => ({
           ...prev,
-          ...(role    && !prev.Role    ? { Role:    role    } : {}),
-          ...(company && !prev.Company ? { Company: company } : {}),
+          ...(role    ? { Role:    role    } : {}),
+          ...(company ? { Company: company } : {}),
         }));
         setScrapeNote(role || company ? "ok" : "empty");
       } else {
