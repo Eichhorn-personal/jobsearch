@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Container, Form, InputGroup, Button, Modal, Spinner } from "react-bootstrap";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../context/AuthContext";
+import { statusClass, STATUS_COLORS } from "../utils/statusColor";
 import "../DataTable.css";
 
 export default function AdminPage() {
@@ -121,6 +122,19 @@ export default function AdminPage() {
     setDropdowns((prev) => ({
       ...prev,
       [fieldName]: prev[fieldName].filter((o) => o.id !== id),
+    }));
+  };
+
+  const saveColor = async (optId, color, fieldName) => {
+    const res = await request(`/api/dropdowns/option/${optId}`, {
+      method: "PUT",
+      body: JSON.stringify({ color }),
+    });
+    if (!res.ok) return;
+    const updated = await res.json();
+    setDropdowns((prev) => ({
+      ...prev,
+      [fieldName]: prev[fieldName].map((o) => (o.id === optId ? updated : o)),
     }));
   };
 
@@ -276,6 +290,28 @@ export default function AdminPage() {
               ) : (
                 <>
                   <span style={{ flex: 1 }}>{opt.label}</span>
+                  {fieldName === "Status" && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                      <span
+                        className={`status-chip ${opt.color || statusClass(opt.label)}`}
+                        style={{ fontSize: 11, pointerEvents: "none", userSelect: "none" }}
+                        aria-hidden="true"
+                      >
+                        {opt.label}
+                      </span>
+                      <Form.Select
+                        size="sm"
+                        value={opt.color || ""}
+                        onChange={(e) => saveColor(opt.id, e.target.value, fieldName)}
+                        aria-label={`Color for ${opt.label}`}
+                        style={{ width: 88, fontSize: 12 }}
+                      >
+                        {STATUS_COLORS.map((c) => (
+                          <option key={c.value} value={c.value}>{c.label}</option>
+                        ))}
+                      </Form.Select>
+                    </div>
+                  )}
                   <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
                     <button
                       className="row-action-btn"

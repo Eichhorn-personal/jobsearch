@@ -77,6 +77,12 @@ if (!userCols.includes("photo")) {
   db.exec("ALTER TABLE users ADD COLUMN photo TEXT");
 }
 
+// Migration: add color column to dropdown_options
+const dropCols = db.pragma("table_info(dropdown_options)").map((c) => c.name);
+if (!dropCols.includes("color")) {
+  db.exec("ALTER TABLE dropdown_options ADD COLUMN color TEXT");
+}
+
 // Always ensure designated admin has admin role (handles fresh DBs where user didn't exist at migration time)
 const adminEmail = process.env.ADMIN_EMAIL;
 if (adminEmail) {

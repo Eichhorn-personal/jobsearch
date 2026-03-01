@@ -2,20 +2,10 @@ import { useState, useEffect } from "react";
 import { Button, Container, Modal } from "react-bootstrap";
 import { useApi } from "../hooks/useApi";
 import AddJobModal from "./AddJobModal";
+import { statusClass } from "../utils/statusColor";
 import "../DataTable.css";
 
 const COLUMNS = ["Date", "Role", "Company", "Status"];
-
-function statusClass(status) {
-  const s = (status || "").toLowerCase();
-  if (s.includes("apply") || s.includes("applied")) return "status-applied";
-  if (s.includes("phone") || s.includes("screen")) return "status-phone-screen";
-  if (s.includes("interview")) return "status-interview";
-  if (s.includes("offer")) return "status-offer";
-  if (s.includes("reject")) return "status-rejected";
-  if (s.includes("withdraw")) return "status-withdrawn";
-  return "status-default";
-}
 
 // Fixed px width for constrained columns; flex for fluid ones
 const COL_STYLE = {
@@ -28,6 +18,7 @@ const COL_STYLE = {
 export default function DataTable() {
   const [rows, setRows] = useState([]);
   const [dropdownOptions, setDropdownOptions] = useState({});
+  const [statusColorMap, setStatusColorMap] = useState({});
   const [showAddModal, setShowAddModal] = useState(false);
   const [viewingRow, setViewingRow] = useState(null);
   const [confirmRow, setConfirmRow] = useState(null);
@@ -45,10 +36,17 @@ export default function DataTable() {
       .then(res => res.json())
       .then(optionsData => {
         const labels = {};
+        const colorMap = {};
         for (const [field, opts] of Object.entries(optionsData)) {
           labels[field] = opts.map(o => o.label);
+          if (field === "Status") {
+            for (const o of opts) {
+              if (o.color) colorMap[o.label] = o.color;
+            }
+          }
         }
         setDropdownOptions(labels);
+        setStatusColorMap(colorMap);
       })
       .catch(err => console.error("Failed to load dropdown options:", err));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -195,7 +193,7 @@ export default function DataTable() {
               {COLUMNS.map(col => (
                 <div key={col} className="sheet-cell" role="cell" style={COL_STYLE[col]}>
                   {col === "Status" ? (
-                    <span className={`status-chip ${statusClass(row[col])}`}>{row[col] ?? ""}</span>
+                    <span className={`status-chip ${statusColorMap[row[col]] || statusClass(row[col])}`}>{row[col] ?? ""}</span>
                   ) : (
                     <span style={{ padding: "4px 10px", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {row[col] ?? ""}

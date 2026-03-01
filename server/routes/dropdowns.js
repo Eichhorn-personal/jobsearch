@@ -20,7 +20,7 @@ router.get("/", (_req, res) => {
   const grouped = {};
   for (const row of rows) {
     if (!grouped[row.field_name]) grouped[row.field_name] = [];
-    grouped[row.field_name].push({ id: row.id, label: row.label, sort_order: row.sort_order });
+    grouped[row.field_name].push({ id: row.id, label: row.label, sort_order: row.sort_order, color: row.color || null });
   }
   return res.json(grouped);
 });
@@ -43,7 +43,7 @@ router.post("/:fieldName", requireAdmin, (req, res) => {
       .prepare("INSERT INTO dropdown_options (field_name, label, sort_order) VALUES (?, ?, ?)")
       .run(fieldName, label.trim(), maxOrder + 1);
     const created = db.prepare("SELECT * FROM dropdown_options WHERE id = ?").get(result.lastInsertRowid);
-    return res.status(201).json({ id: created.id, label: created.label, sort_order: created.sort_order });
+    return res.status(201).json({ id: created.id, label: created.label, sort_order: created.sort_order, color: created.color || null });
   } catch (err) {
     if (err.message.includes("UNIQUE")) {
       return res.status(409).json({ error: "That option already exists for this field" });
@@ -68,21 +68,35 @@ router.put("/:fieldName/reorder", requireAdmin, (req, res) => {
   return res.json({ ok: true });
 });
 
-// PUT /api/dropdowns/option/:id  { label }
-// Rename an option
+// PUT /api/dropdowns/option/:id  { label?, color? }
+// Rename and/or set color for an option. At least one field must be provided.
 router.put("/option/:id", requireAdmin, (req, res) => {
-  const { label } = req.body;
-  if (!label || !label.trim()) {
-    return res.status(400).json({ error: "label is required" });
+  const { label, color } = req.body;
+  const trimmedLabel = label != null ? label.trim() : null;
+
+  if (trimmedLabel === "") {
+    return res.status(400).json({ error: "label cannot be empty" });
+  }
+  if (trimmedLabel === null && color === undefined) {
+    return res.status(400).json({ error: "label or color is required" });
   }
 
   const opt = db.prepare("SELECT * FROM dropdown_options WHERE id = ?").get(req.params.id);
   if (!opt) return res.status(404).json({ error: "Option not found" });
 
   try {
-    db.prepare("UPDATE dropdown_options SET label = ? WHERE id = ?").run(label.trim(), req.params.id);
+    if (trimmedLabel !== null && color !== undefined) {
+      db.prepare("UPDATE dropdown_options SET label = ?, color = ? WHERE id = ?")
+        .run(trimmedLabel, color || null, req.params.id);
+    } else if (trimmedLabel !== null) {
+      db.prepare("UPDATE dropdown_options SET label = ? WHERE id = ?")
+        .run(trimmedLabel, req.params.id);
+    } else {
+      db.prepare("UPDATE dropdown_options SET color = ? WHERE id = ?")
+        .run(color || null, req.params.id);
+    }
     const updated = db.prepare("SELECT * FROM dropdown_options WHERE id = ?").get(req.params.id);
-    return res.json({ id: updated.id, label: updated.label, sort_order: updated.sort_order });
+    return res.json({ id: updated.id, label: updated.label, sort_order: updated.sort_order, color: updated.color || null });
   } catch (err) {
     if (err.message.includes("UNIQUE")) {
       return res.status(409).json({ error: "That option already exists for this field" });
