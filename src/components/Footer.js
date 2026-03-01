@@ -1,7 +1,7 @@
 import { useTheme } from "../context/ThemeContext";
 
 export default function Footer() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const isDark = theme === "dark";
 
   return (
@@ -20,25 +20,10 @@ export default function Footer() {
         padding: "0 16px",
       }}
     >
-      <div className="container d-flex justify-content-between align-items-center">
+      <div className="container d-flex align-items-center">
         <span style={{ fontSize: 12, color: "#5f6368" }}>
           © {new Date().getFullYear()} JobTracker
         </span>
-        <button
-          style={{
-            fontSize: 12,
-            color: "#5f6368",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: "4px 8px",
-            borderRadius: 4,
-          }}
-          onClick={toggleTheme}
-          aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-        >
-          {isDark ? "☀ Light" : "🌙 Dark"}
-        </button>
       </div>
     </footer>
   );

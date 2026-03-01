@@ -1,10 +1,13 @@
 import { Container, NavDropdown } from "react-bootstrap";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import iconSrc from "../job-tracker-icon.svg";
 
 export default function Header() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === "dark";
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -35,6 +38,13 @@ export default function Header() {
               Manage
             </button>
           )}
+          <button
+            onClick={toggleTheme}
+            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, padding: "4px 6px", lineHeight: 1 }}
+          >
+            {isDark ? "☀" : "🌙"}
+          </button>
           {user ? (
             <NavDropdown
               title={avatarTitle}

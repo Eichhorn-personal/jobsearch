@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { AuthProvider } from "../context/AuthContext";
+import { ThemeProvider } from "../context/ThemeContext";
 import Header from "../components/Header";
 
 function renderHeader(user = null) {
@@ -11,9 +12,11 @@ function renderHeader(user = null) {
   }
   return render(
     <MemoryRouter>
-      <AuthProvider>
-        <Header />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <Header />
+        </AuthProvider>
+      </ThemeProvider>
     </MemoryRouter>
   );
 }
