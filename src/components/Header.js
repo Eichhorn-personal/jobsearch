@@ -1,6 +1,7 @@
-import { Container, Image, NavDropdown } from "react-bootstrap";
+import { Container, NavDropdown } from "react-bootstrap";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import iconSrc from "../job-tracker-icon.svg";
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -23,7 +24,7 @@ export default function Header() {
 
         {/* Left: Logo + App name */}
         <Link to="/" className="d-flex align-items-center text-decoration-none" style={{ gap: 10 }}>
-          <Image src="/logo192.png" alt="" width={40} height={40} roundedCircle />
+          <img src={iconSrc} alt="" width={40} height={40} style={{ borderRadius: "10px" }} />
           <span className="gmail-app-name">JobTracker</span>
         </Link>
 
