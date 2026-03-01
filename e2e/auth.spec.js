@@ -14,9 +14,9 @@ test.describe("Auth — redirects", () => {
 // ── login form ────────────────────────────────────────────────────────────────
 
 test.describe("Auth — login form", () => {
-  test('renders "Sign in to JobTracker" heading', async ({ page }) => {
+  test('renders "Sign in" heading', async ({ page }) => {
     await page.goto("/#/login");
-    await expect(page.getByRole("heading", { name: /sign in to jobtracker/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^sign in$/i })).toBeVisible();
   });
 
   test('switching to register mode shows "Create account" heading', async ({ page }) => {
@@ -25,7 +25,7 @@ test.describe("Auth — login form", () => {
     await expect(page.getByRole("heading", { name: /create account/i })).toBeVisible();
   });
 
-  test("successful login redirects to home and shows username in header", async ({ page }) => {
+  test("successful login redirects to home and shows avatar in header", async ({ page }) => {
     await mockLoginSuccess(page, CONTRIBUTOR);
     await mockApi(page);
     await page.goto("/#/login");
@@ -34,7 +34,10 @@ test.describe("Auth — login form", () => {
     await page.locator('input[type="password"]').fill("secret");
     await page.getByRole("button", { name: /sign in/i }).click();
     await expect(page).toHaveURL(/localhost:3000\/?#\/$/);
-    await expect(page.getByText("user@example.com")).toBeVisible();
+    // Header shows a letter-avatar; its aria-label includes the username
+    await expect(
+      page.locator('[aria-label="Account menu for user@example.com"]')
+    ).toBeVisible();
   });
 
   test("invalid credentials shows error alert", async ({ page }) => {
@@ -50,13 +53,13 @@ test.describe("Auth — login form", () => {
 // ── logout ────────────────────────────────────────────────────────────────────
 
 test.describe("Auth — logout", () => {
-  test("clicking Logout returns to /#/login", async ({ page }) => {
+  test("clicking Sign out returns to /#/login", async ({ page }) => {
     await setAuth(page, CONTRIBUTOR);
     await mockApi(page);
     await page.goto("/#/");
-    // Open user dropdown then click Logout (NavDropdown.Item renders as <a>)
-    await page.getByText("user@example.com").click();
-    await page.getByText(/logout/i).click();
+    // Open the user dropdown via the letter-avatar toggle
+    await page.locator('[aria-label="Account menu for user@example.com"]').click();
+    await page.getByText(/sign out/i).click();
     await expect(page).toHaveURL(/#\/login/);
   });
 });

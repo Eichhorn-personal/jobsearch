@@ -60,53 +60,61 @@ describe("DataTable — ARIA structure", () => {
   });
 });
 
-// ── row action buttons ────────────────────────────────────────────────────────
+// ── row selection and toolbar ─────────────────────────────────────────────────
+// DataTable uses a selection model: clicking a row reveals Edit/Delete toolbar buttons.
 
 describe("DataTable — action buttons", () => {
-  test("eye button has accessible label including role and company", async () => {
+  test("clicking a row reveals Edit toolbar button", async () => {
     renderDataTable();
-    await waitFor(() => {
-      expect(
-        screen.getAllByRole("button", { name: /view or edit engineer at acme/i })[0]
-      ).toBeInTheDocument();
-    });
+    await act(async () => {});
+    // rows with aria-selected are data rows (header row has no aria-selected)
+    const dataRows = screen
+      .getAllByRole("row")
+      .filter((r) => r.getAttribute("aria-selected") !== null);
+    userEvent.click(dataRows[0]);
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /edit/i })).toBeInTheDocument()
+    );
   });
 
-  test("delete icon button has accessible label including role and company", async () => {
+  test("clicking a row reveals Delete toolbar button", async () => {
     renderDataTable();
-    await waitFor(() => {
+    await act(async () => {});
+    const dataRows = screen
+      .getAllByRole("row")
+      .filter((r) => r.getAttribute("aria-selected") !== null);
+    userEvent.click(dataRows[0]);
+    await waitFor(() =>
       expect(
-        screen.getAllByRole("button", { name: /delete engineer at acme/i })[0]
-      ).toBeInTheDocument();
-    });
+        screen.getByRole("button", { name: /delete/i })
+      ).toBeInTheDocument()
+    );
   });
 });
 
 // ── delete confirmation modal ─────────────────────────────────────────────────
 
 describe("DataTable — delete confirmation", () => {
-  test("clicking delete icon shows confirmation dialog", async () => {
+  // Helper: load table, select the first row, click the toolbar Delete button
+  async function openDeleteModal() {
     renderDataTable();
-    await waitFor(() =>
-      screen.getAllByRole("button", { name: /delete engineer at acme/i })[0]
-    );
-    userEvent.click(
-      screen.getAllByRole("button", { name: /delete engineer at acme/i })[0]
-    );
-    await waitFor(() =>
-      expect(screen.getByRole("dialog")).toBeInTheDocument()
-    );
+    await act(async () => {});
+    const dataRows = screen
+      .getAllByRole("row")
+      .filter((r) => r.getAttribute("aria-selected") !== null);
+    userEvent.click(dataRows[0]);
+    await waitFor(() => screen.getByRole("button", { name: /delete/i }));
+    userEvent.click(screen.getByRole("button", { name: /delete/i }));
+    await waitFor(() => screen.getByRole("dialog"));
+  }
+
+  test("clicking delete toolbar button shows confirmation dialog", async () => {
+    await openDeleteModal();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
   test("confirm dialog has aria-labelledby pointing to title", async () => {
-    renderDataTable();
-    await waitFor(() =>
-      screen.getAllByRole("button", { name: /delete engineer at acme/i })[0]
-    );
-    userEvent.click(
-      screen.getAllByRole("button", { name: /delete engineer at acme/i })[0]
-    );
-    await waitFor(() => screen.getByRole("dialog"));
+    await openDeleteModal();
     expect(screen.getByRole("dialog")).toHaveAttribute(
       "aria-labelledby",
       "confirm-delete-title"
@@ -114,18 +122,12 @@ describe("DataTable — delete confirmation", () => {
   });
 
   test("confirming delete removes the row from the table", async () => {
-    renderDataTable();
-    await waitFor(() =>
-      screen.getAllByRole("button", { name: /delete engineer at acme/i })[0]
-    );
-    userEvent.click(
-      screen.getAllByRole("button", { name: /delete engineer at acme/i })[0]
-    );
-    await waitFor(() => screen.getByRole("dialog"));
+    await openDeleteModal();
+    // "Delete" (exact) targets the modal danger button, not the toolbar "✕ Delete"
     userEvent.click(screen.getByRole("button", { name: "Delete" }));
     await waitFor(() =>
       expect(
-        screen.queryAllByRole("button", { name: /delete engineer at acme/i })
+        screen.queryAllByRole("button", { name: /delete/i })
       ).toHaveLength(0)
     );
   });

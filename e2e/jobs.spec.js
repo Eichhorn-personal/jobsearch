@@ -43,8 +43,8 @@ test.describe("Jobs — add", () => {
     await page.getByRole("button", { name: /add job/i }).click();
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
-    // Form.Label has no controlId — target text inputs by index in the form
-    // Order: Date(0), Role(1), Company(2), then Recruiter/HiringMgr/Panel/HR
+    // Form.Label has no controlId — target text inputs by index in the form.
+    // Date(0) is readonly in add mode; Role(1), Company(2) are editable.
     const textInputs = dialog.locator('input[type="text"]');
     await textInputs.nth(1).fill("QA Engineer"); // Role
     await textInputs.nth(2).fill("Initech");     // Company
@@ -57,10 +57,14 @@ test.describe("Jobs — add", () => {
 });
 
 // ── delete job ────────────────────────────────────────────────────────────────
+// DataTable uses row-selection: click a row to select it, then use the
+// toolbar "✕ Delete" button that appears.
 
 test.describe("Jobs — delete", () => {
-  test("clicking delete icon shows confirmation dialog", async ({ page }) => {
-    await page.getByRole("button", { name: /delete engineer at acme/i }).click();
+  test("clicking delete toolbar button shows confirmation dialog", async ({ page }) => {
+    const table = page.getByRole("table", { name: /job applications/i });
+    await table.getByRole("row").filter({ hasText: /engineer/i }).click();
+    await page.getByRole("button", { name: /delete/i }).click();
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
     // Modal.Title renders as <div class="modal-title h4">, not a heading element
@@ -68,28 +72,36 @@ test.describe("Jobs — delete", () => {
   });
 
   test("cancelling delete keeps the row", async ({ page }) => {
-    await page.getByRole("button", { name: /delete engineer at acme/i }).click();
+    const table = page.getByRole("table", { name: /job applications/i });
+    await table.getByRole("row").filter({ hasText: /engineer/i }).click();
+    await page.getByRole("button", { name: /delete/i }).click();
     await expect(page.getByRole("dialog")).toBeVisible();
     await page.getByRole("button", { name: /cancel/i }).click();
-    await expect(page.getByRole("button", { name: /delete engineer at acme/i })).toBeVisible();
+    // Row data should still be in the table
+    await expect(table.getByText("Engineer", { exact: true })).toBeVisible();
+    await expect(table.getByText("Acme", { exact: true })).toBeVisible();
   });
 
   test("confirming delete removes the row", async ({ page }) => {
-    await page.getByRole("button", { name: /delete engineer at acme/i }).click();
+    const table = page.getByRole("table", { name: /job applications/i });
+    await table.getByRole("row").filter({ hasText: /engineer/i }).click();
+    await page.getByRole("button", { name: /delete/i }).click();
     await expect(page.getByRole("dialog")).toBeVisible();
-    // Use exact:true so "Delete Engineer at Acme" trash buttons don't also match
+    // Exact match targets the modal danger button, not the toolbar "✕ Delete"
     await page.getByRole("button", { name: "Delete", exact: true }).click();
-    await expect(
-      page.getByRole("button", { name: /delete engineer at acme/i })
-    ).not.toBeVisible();
+    await expect(table.getByText("Engineer", { exact: true })).not.toBeVisible();
   });
 });
 
 // ── edit job ──────────────────────────────────────────────────────────────────
+// DataTable uses row-selection: click a row to select it, then use the
+// toolbar "✏ Edit" button that appears.
 
 test.describe("Jobs — edit", () => {
-  test("clicking eye icon opens modal pre-filled with job data", async ({ page }) => {
-    await page.getByRole("button", { name: /view or edit engineer at acme/i }).click();
+  test("clicking Edit toolbar button opens modal pre-filled with job data", async ({ page }) => {
+    const table = page.getByRole("table", { name: /job applications/i });
+    await table.getByRole("row").filter({ hasText: /engineer/i }).click();
+    await page.getByRole("button", { name: /edit/i }).click();
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
     await expect(dialog.locator(".modal-title")).toContainText(/edit job/i);
@@ -100,14 +112,15 @@ test.describe("Jobs — edit", () => {
   });
 
   test("saving edit updates the row inline", async ({ page }) => {
-    await page.getByRole("button", { name: /view or edit engineer at acme/i }).click();
+    const table = page.getByRole("table", { name: /job applications/i });
+    await table.getByRole("row").filter({ hasText: /engineer/i }).click();
+    await page.getByRole("button", { name: /edit/i }).click();
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
     const textInputs = dialog.locator('input[type="text"]');
     await textInputs.nth(1).fill("Senior Engineer"); // Role
     // Submit button text is "Save Changes" in edit mode
     await dialog.getByRole("button", { name: /save changes/i }).click();
-    const table = page.getByRole("table", { name: /job applications/i });
     await expect(table.getByText("Senior Engineer", { exact: true })).toBeVisible();
   });
 });

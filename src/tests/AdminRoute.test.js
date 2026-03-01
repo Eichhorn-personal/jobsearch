@@ -48,7 +48,7 @@ describe("AdminRoute /admin", () => {
   test("unauthenticated user is redirected to /login", () => {
     renderApp("/admin");
     expect(
-      screen.getByRole("heading", { name: /sign in to jobtracker/i })
+      screen.getByRole("heading", { name: /^sign in$/i })
     ).toBeInTheDocument();
     expect(screen.queryByTestId("admin-page")).not.toBeInTheDocument();
   });
@@ -71,7 +71,7 @@ describe("AdminRoute /logs", () => {
   test("unauthenticated user is redirected to /login", () => {
     renderApp("/logs");
     expect(
-      screen.getByRole("heading", { name: /sign in to jobtracker/i })
+      screen.getByRole("heading", { name: /^sign in$/i })
     ).toBeInTheDocument();
     expect(screen.queryByTestId("logs-page")).not.toBeInTheDocument();
   });

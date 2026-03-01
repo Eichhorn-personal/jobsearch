@@ -31,15 +31,19 @@ test.describe("Mobile — layout", () => {
 });
 
 // ── Card interactions ─────────────────────────────────────────────────────────
+// Cards use a tap-to-select model: tapping a card selects it and reveals
+// "✏ Edit" and "✕ Delete" toolbar buttons above the card list.
 
 test.describe("Mobile — card interactions", () => {
-  test("tapping eye icon opens edit modal", async ({ page }) => {
-    await page.locator(".job-card").first().locator(".job-card-btn").first().tap();
+  test("tapping a card and Edit opens edit modal", async ({ page }) => {
+    await page.locator(".job-card").first().tap();
+    await page.getByRole("button", { name: /edit/i }).click();
     await expect(page.getByRole("dialog")).toBeVisible();
   });
 
-  test("tapping delete icon shows confirmation dialog", async ({ page }) => {
-    await page.locator(".job-card").first().locator(".job-card-btn").nth(1).tap();
+  test("tapping a card and Delete shows confirmation dialog", async ({ page }) => {
+    await page.locator(".job-card").first().tap();
+    await page.getByRole("button", { name: /delete/i }).click();
     await expect(page.getByRole("dialog")).toBeVisible();
     await expect(page.getByText(/delete record/i)).toBeVisible();
   });

@@ -1,6 +1,13 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
+import { AuthProvider } from "../context/AuthContext";
 import AddJobModal from "../components/AddJobModal";
+
+// useApi calls useAuth internally; mock it so no AuthProvider is needed
+jest.mock("../hooks/useApi", () => ({
+  useApi: () => ({ request: jest.fn() }),
+}));
 
 const defaultProps = {
   show: true,
@@ -11,8 +18,23 @@ const defaultProps = {
   dropdownOptions: { Status: ["Applied", "Rejected", "Offer"] },
 };
 
+// initialData used for edit-mode tests (date field is readOnly in add mode)
+const editInitialData = {
+  id: 5,
+  Date: "01/15/2025",
+  Role: "Engineer",
+  Company: "Acme",
+  Status: "Applied",
+};
+
 function renderModal(overrides = {}) {
-  return render(<AddJobModal {...defaultProps} {...overrides} />);
+  return render(
+    <MemoryRouter>
+      <AuthProvider>
+        <AddJobModal {...defaultProps} {...overrides} />
+      </AuthProvider>
+    </MemoryRouter>
+  );
 }
 
 afterEach(() => jest.clearAllMocks());
@@ -36,10 +58,11 @@ describe("AddJobModal — ARIA", () => {
 });
 
 // ── date validation ───────────────────────────────────────────────────────────
+// The date field is readOnly in add mode; use edit mode so typing is possible.
 
 describe("AddJobModal — date validation", () => {
   test("invalid date shows error feedback with id='date-error'", () => {
-    renderModal();
+    renderModal({ initialData: editInitialData });
     const dateInput = screen.getByPlaceholderText("mm/dd/yyyy");
     userEvent.clear(dateInput);
     userEvent.type(dateInput, "not-a-date");
@@ -50,7 +73,7 @@ describe("AddJobModal — date validation", () => {
   });
 
   test("date input gains aria-describedby when invalid", () => {
-    renderModal();
+    renderModal({ initialData: editInitialData });
     const dateInput = screen.getByPlaceholderText("mm/dd/yyyy");
     userEvent.clear(dateInput);
     userEvent.type(dateInput, "not-a-date");
@@ -59,24 +82,24 @@ describe("AddJobModal — date validation", () => {
   });
 
   test("submit button is disabled when date is invalid", () => {
-    renderModal();
+    renderModal({ initialData: editInitialData });
     const dateInput = screen.getByPlaceholderText("mm/dd/yyyy");
     userEvent.clear(dateInput);
     userEvent.type(dateInput, "not-a-date");
     fireEvent.blur(dateInput);
-    expect(screen.getByRole("button", { name: /add job/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /save changes/i })).toBeDisabled();
   });
 
-  test("onAdd is not called when date is invalid", () => {
-    const onAdd = jest.fn();
-    renderModal({ onAdd });
+  test("onSave is not called when date is invalid", () => {
+    const onSave = jest.fn();
+    renderModal({ initialData: editInitialData, onSave });
     const dateInput = screen.getByPlaceholderText("mm/dd/yyyy");
     userEvent.clear(dateInput);
     userEvent.type(dateInput, "not-a-date");
     fireEvent.blur(dateInput);
     // Click the (disabled) submit button — should not trigger
-    userEvent.click(screen.getByRole("button", { name: /add job/i }));
-    expect(onAdd).not.toHaveBeenCalled();
+    userEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(onSave).not.toHaveBeenCalled();
   });
 });
 
@@ -86,20 +109,19 @@ describe("AddJobModal — form submission", () => {
   test("submitting add form with valid date calls onAdd", async () => {
     const onAdd = jest.fn().mockResolvedValue(undefined);
     renderModal({ onAdd });
-    // The date field is pre-filled with today's date in mm/dd/yyyy format
+    // Modal renders in a portal; use document to reach its inputs.
+    // Date is pre-filled (readonly), Source Link is type="url" — so
+    // input[type='text']:not([readonly]) starts at Role then Company.
+    // eslint-disable-next-line testing-library/no-node-access
+    const editableText = document.querySelectorAll("input[type='text']:not([readonly])");
+    fireEvent.change(editableText[0], { target: { value: "Engineer" } }); // Role
+    fireEvent.change(editableText[1], { target: { value: "Acme" } });     // Company
     userEvent.click(screen.getByRole("button", { name: /add job/i }));
     await waitFor(() => expect(onAdd).toHaveBeenCalledTimes(1));
   });
 
   test("in edit mode modal title says 'Edit Job'", () => {
-    const initialData = {
-      id: 5,
-      Date: "01/15/2025",
-      Role: "Engineer",
-      Company: "Acme",
-      Status: "Applied",
-    };
-    renderModal({ initialData });
+    renderModal({ initialData: editInitialData });
     // eslint-disable-next-line testing-library/no-node-access
     expect(document.getElementById("add-job-modal-title")).toHaveTextContent(
       "Edit Job"
@@ -107,14 +129,7 @@ describe("AddJobModal — form submission", () => {
   });
 
   test("in edit mode submit button says 'Save Changes'", () => {
-    const initialData = {
-      id: 5,
-      Date: "01/15/2025",
-      Role: "Engineer",
-      Company: "Acme",
-      Status: "Applied",
-    };
-    renderModal({ initialData });
+    renderModal({ initialData: editInitialData });
     expect(
       screen.getByRole("button", { name: /save changes/i })
     ).toBeInTheDocument();

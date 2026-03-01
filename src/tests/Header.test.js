@@ -23,10 +23,11 @@ afterEach(() => localStorage.clear());
 // ── semantic / ARIA structure ─────────────────────────────────────────────────
 
 describe("Header — ARIA structure", () => {
-  test('navbar has aria-label="Main navigation"', () => {
+  test('header has aria-label="Main navigation"', () => {
+    // <header> has implicit ARIA role "banner" (not "navigation")
     renderHeader({ id: 1, username: "u@example.com", role: "contributor" });
     expect(
-      screen.getByRole("navigation", { name: /main navigation/i })
+      screen.getByRole("banner", { name: /main navigation/i })
     ).toBeInTheDocument();
   });
 
@@ -50,30 +51,38 @@ describe("Header — ARIA structure", () => {
 // ── role-conditional menu items ───────────────────────────────────────────────
 
 describe("Header — role-based menu items", () => {
-  test("admin user sees Manage item after opening dropdown", async () => {
+  test("admin user sees Manage button", () => {
+    // Manage is a standalone button outside the dropdown for admin users
     renderHeader({ id: 1, username: "admin@example.com", role: "admin" });
-    // NavDropdown renders items lazily — need to open it first
-    userEvent.click(screen.getByText("admin@example.com"));
-    await waitFor(() =>
-      expect(screen.getByText(/manage/i)).toBeInTheDocument()
-    );
+    expect(screen.getByRole("button", { name: /^manage$/i })).toBeInTheDocument();
   });
 
-  test("contributor user does not see Manage item after opening dropdown", async () => {
+  test("contributor user does not see Manage button", () => {
     renderHeader({ id: 2, username: "user@example.com", role: "contributor" });
-    userEvent.click(screen.getByText("user@example.com"));
-    // Wait for dropdown to open (Logout should appear)
-    await waitFor(() =>
-      expect(screen.getByText(/logout/i)).toBeInTheDocument()
-    );
-    expect(screen.queryByText(/manage/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^manage$/i })).not.toBeInTheDocument();
   });
 
-  test("Logout item is present after opening dropdown", async () => {
+  test("avatar toggle carries account-menu aria-label", () => {
+    // The letter-avatar span has aria-label="Account menu for <username>"
     renderHeader({ id: 1, username: "u@example.com", role: "contributor" });
-    userEvent.click(screen.getByText("u@example.com"));
+    expect(
+      screen.getByLabelText(/account menu for u@example\.com/i)
+    ).toBeInTheDocument();
+  });
+
+  test("dropdown contains Sign out item after opening", async () => {
+    renderHeader({ id: 1, username: "u@example.com", role: "contributor" });
+    userEvent.click(screen.getByLabelText(/account menu for u@example\.com/i));
     await waitFor(() =>
-      expect(screen.getByText(/logout/i)).toBeInTheDocument()
+      expect(screen.getByText(/sign out/i)).toBeInTheDocument()
+    );
+  });
+
+  test("dropdown contains Edit Profile item after opening", async () => {
+    renderHeader({ id: 1, username: "u@example.com", role: "contributor" });
+    userEvent.click(screen.getByLabelText(/account menu for u@example\.com/i));
+    await waitFor(() =>
+      expect(screen.getByText(/edit profile/i)).toBeInTheDocument()
     );
   });
 });
