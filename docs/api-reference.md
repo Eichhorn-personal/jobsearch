@@ -43,7 +43,7 @@ Authenticate with email/password.
 
 | Status | Body |
 |--------|------|
-| 200 | `{ "token": "<jwt>", "user": { "id": 1, "username": "...", "role": "contributor" } }` |
+| 200 | `{ "token": "<jwt>", "user": { "id": 1, "username": "...", "role": "contributor", "display_name": null, "photo": null, "has_password": true } }` |
 | 400 | `{ "error": "..." }` — missing fields |
 | 401 | `{ "error": "Invalid credentials" }` |
 
@@ -64,10 +64,10 @@ Exchange a Google credential (ID token from the frontend's `GoogleLogin` button)
 
 | Status | Body |
 |--------|------|
-| 200 | `{ "token": "<jwt>", "user": { "id": 1, "username": "...", "role": "contributor" } }` |
+| 200 | `{ "token": "<jwt>", "user": { "id": 1, "username": "...", "role": "contributor", "display_name": null, "photo": null, "has_password": false }, "google_picture": "<url-or-null>" }` |
 | 401 | `{ "error": "Google sign-in failed" }` |
 
-New Google users are created automatically with role `contributor`. If `ADMIN_EMAIL` matches the Google account, the role is set to `admin` at creation time.
+New Google users are created automatically with role `contributor`. If `ADMIN_EMAIL` matches the Google account, the role is set to `admin` at creation time. `google_picture` is the Google-hosted avatar URL from the ID token payload; the frontend stores it in `localStorage` (`authGooglePicture`) and offers a one-time import prompt on the Profile page if the user has no photo yet.
 
 ---
 
@@ -83,7 +83,7 @@ Best-effort server-side logout (logs the event). No token invalidation (stateles
 
 ### `GET /api/auth/me`
 
-Return the current user's profile.
+Return the current user's profile (re-read from DB).
 
 **Auth**: Required
 
@@ -91,8 +91,41 @@ Return the current user's profile.
 
 | Status | Body |
 |--------|------|
-| 200 | `{ "id": 1, "username": "...", "role": "contributor" }` |
+| 200 | `{ "id": 1, "username": "...", "role": "contributor", "display_name": null, "photo": null, "has_password": true }` |
 | 401 | Missing or invalid token |
+
+---
+
+### `PUT /api/auth/profile`
+
+Update the current user's display name, photo, and/or password. All fields are optional; include only what you want to change.
+
+**Auth**: Required (any role)
+
+**Body**
+```json
+{
+  "display_name": "Jane Smith",
+  "photo": "data:image/jpeg;base64,...",
+  "google_picture_url": "https://lh3.googleusercontent.com/...",
+  "current_password": "oldpass",
+  "new_password": "newpass123"
+}
+```
+
+- `photo` — base64 data URL (max 300 KB string length). Provide `null` to remove.
+- `google_picture_url` — alternative to `photo`; the server fetches the image from `*.googleusercontent.com` and stores it as base64. Host is validated; other origins are rejected.
+- `current_password` — required when changing password **and** the account already has a password hash. Omit for Google-only accounts (empty password hash) setting a password for the first time.
+- `new_password` — 8–128 characters.
+
+**Responses**
+
+| Status | Body |
+|--------|------|
+| 200 | Updated user object (`id`, `username`, `role`, `display_name`, `photo`, `has_password`) |
+| 400 | Validation error (missing current password, password length, invalid photo, no fields given) |
+| 401 | Wrong current password |
+| 502 | Could not fetch photo from Google |
 
 ---
 
@@ -298,8 +331,10 @@ No auth required. Used by keep-alive pinger.
 | `USER_CREATED` | `email`, `source` (`password` or `google`) |
 | `USER_LOGIN` | `email`, `source` |
 | `USER_LOGOUT` | `email` |
+| `USER_PROFILE_UPDATED` | `id`, `email` |
 | `USER_ROLE_CHANGED` | `adminEmail`, `targetId`, `targetEmail`, `newRole` |
 | `USER_DELETED` | `adminEmail`, `targetId`, `targetEmail` |
+| `GOOGLE_ACCOUNT_LINKED` | `id`, `email` |
 | `JOB_CREATED` | `id`, `email`, `role`, `company` |
 | `JOB_UPDATED` | `id`, `email`, `role`, `company` |
 | `JOB_DELETED` | `id`, `email`, `role`, `company` |

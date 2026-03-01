@@ -29,7 +29,7 @@ jobtracker/
 │   ├── middleware/
 │   │   └── authenticate.js        # JWT verification; re-fetches role from DB
 │   ├── routes/
-│   │   ├── auth.js                # POST /api/auth/login|register|logout|google, GET /api/auth/me
+│   │   ├── auth.js                # POST /api/auth/login|register|logout|google, GET /api/auth/me, PUT /api/auth/profile
 │   │   ├── jobs.js                # GET|POST /api/jobs, PUT|DELETE /api/jobs/:id
 │   │   ├── users.js               # GET /api/users, PUT /api/users/:id/role, DELETE /api/users/:id
 │   │   ├── dropdowns.js           # GET /api/dropdowns, POST/PATCH/DELETE dropdown options
@@ -57,7 +57,7 @@ jobtracker/
 │   │   └── AddJobModal.js         # Modal form for adding and editing jobs
 │   │
 │   ├── context/
-│   │   ├── AuthContext.js         # User state; login/logout; JWT in localStorage
+│   │   ├── AuthContext.js         # User state; login/logout/updateUser; JWT + authUser in localStorage
 │   │   └── ThemeContext.js        # Light/dark toggle; persists to localStorage
 │   │
 │   ├── hooks/
@@ -66,7 +66,8 @@ jobtracker/
 │   ├── pages/
 │   │   ├── LoginPage.js           # Email/password + Google OAuth login and register
 │   │   ├── AdminPage.js           # User management, dropdown options, logs link, data export
-│   │   └── LogsPage.js            # Activity log viewer (newest-first)
+│   │   ├── LogsPage.js            # Activity log viewer (newest-first)
+│   │   └── ProfilePage.js         # Edit display name, photo (upload or Google import), password
 │   │
 │   ├── tests/                     # Frontend Jest + RTL tests
 │   │   ├── AdminRoute.test.js     # Route guard for /admin and /logs

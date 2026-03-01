@@ -35,6 +35,7 @@ All routes are hash-based (`/#/path`) because the app is hosted on GitHub Pages 
 | `/#/` | `DataTable` | `ProtectedRoute` (any logged-in user) |
 | `/#/admin` | `AdminPage` | `AdminRoute` (role = `admin`) |
 | `/#/logs` | `LogsPage` | `AdminRoute` (role = `admin`) |
+| `/#/profile` | `ProfilePage` | `ProtectedRoute` (any logged-in user) |
 
 ## Backend
 
@@ -57,7 +58,15 @@ Username/password login
 
 Google OAuth login
   Frontend: GoogleLogin button  →  Google credential (ID token)
-  POST /api/auth/google  →  google-auth-library.verifyIdToken  →  upsert user  →  sign JWT  →  return { token, user }
+  POST /api/auth/google  →  google-auth-library.verifyIdToken  →  upsert user  →  sign JWT
+    →  return { token, user, google_picture }
+  google_picture (URL from Google token) is stored in localStorage as authGooglePicture;
+  ProfilePage offers a one-time import banner if the user has no photo stored yet.
+
+Profile update
+  PUT /api/auth/profile  →  update display_name / photo / password in DB
+  photo may be sent as a base64 data URL (client-side canvas resize to 96×96 JPEG)
+  or as google_picture_url (server fetches from googleusercontent.com, converts to base64)
 
 Every protected request
   Authorization: Bearer <token>
@@ -76,7 +85,7 @@ Role is **re-fetched from the database on every request** (not just read from th
 
 | Table | Key columns |
 |-------|-------------|
-| `users` | `id`, `username`, `password`, `google_id`, `role` (default `contributor`) |
+| `users` | `id`, `username`, `password`, `google_id`, `role` (default `contributor`), `display_name`, `photo` (base64 data URL) |
 | `jobs` | `id`, `user_id → users.id CASCADE`, all job fields |
 | `dropdown_options` | `id`, `field_name`, `label`, `sort_order` |
 

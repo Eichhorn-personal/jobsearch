@@ -34,14 +34,15 @@ Renders the full-page shell: skip link → `<Header>` → `<main id="main-conten
 ### `AuthContext` — `src/context/AuthContext.js`
 
 ```js
-const { user, login, logout } = useAuth();
+const { user, login, logout, updateUser } = useAuth();
 ```
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `user` | `object \| null` | `{ id, username, role }` — null when not logged in |
-| `login(token, userData)` | function | Writes token + user to localStorage; sets `user` state |
-| `logout()` | function | POSTs to `/api/auth/logout` (best-effort), clears localStorage, sets `user` to null |
+| `user` | `object \| null` | `{ id, username, role, display_name, photo, has_password }` — null when not logged in |
+| `login(token, userData, googlePicture?)` | function | Writes token + user to localStorage; optionally stores `googlePicture` URL as `authGooglePicture`; sets `user` state |
+| `logout()` | function | POSTs to `/api/auth/logout` (best-effort), clears localStorage (`authToken`, `authUser`, `authGooglePicture`), sets `user` to null |
+| `updateUser(updatedUser)` | function | Patches `authUser` in localStorage and updates `user` state — used by ProfilePage after a successful `PUT /api/auth/profile` |
 
 State is initialised from `localStorage` so the session survives page refreshes.
 
@@ -86,9 +87,11 @@ Top navigation bar. Rendered inside `PageLayout` on all authenticated pages.
 
 - Brand: `JobTracker` logo + text — links to `/#/`
 - Logo image has `alt=""` (decorative, not announced by screen readers)
-- Right side: `NavDropdown` with the logged-in `username` as the toggle
-  - Admin users see a **⚙ Manage** item linking to `/#/admin`
-  - All users see **Logout**
+- Right side: `NavDropdown` whose toggle is:
+  - A circular `<img>` of `user.photo` if a photo is stored, otherwise a letter-avatar `<span>` with the first character of the username
+  - Dropdown header shows `user.display_name` if set, otherwise `user.username`
+  - Admin users see a **Manage** button linking to `/#/admin`
+  - All users see **Edit Profile** (links to `/#/profile`) and **Sign out**
 - `aria-label="Main navigation"` on the `<nav>` element
 
 ---
@@ -189,6 +192,23 @@ Sections:
 ### `LogsPage` — `src/pages/LogsPage.js`
 
 Admin-only activity log viewer. Accessible at `/#/logs`. Displays log entries newest-first with all key=value pairs rendered as small uniform tags. The `id` field is excluded from display.
+
+---
+
+### `ProfilePage` — `src/pages/ProfilePage.js`
+
+User profile editor. Accessible at `/#/profile` (any logged-in user).
+
+**Sections**
+
+| Section | Content |
+|---------|---------|
+| **Google photo banner** | Shown once per login session (if `authGooglePicture` is in localStorage and the user has no stored photo). "Import" fetches the photo server-side via `PUT /api/auth/profile` with `google_picture_url`; "Dismiss" clears the localStorage key. |
+| **Photo** | 96×96 circular preview. "Change photo" opens a hidden `<input type="file">`; the selected image is cover-cropped and resized to 96×96 JPEG via `<canvas>` before storing as a base64 data URL. "Remove" clears the photo. |
+| **Account** | Display name text input (editable); email address (read-only). |
+| **Password** | Hidden by default; toggled with "Change password". Shows "Current password" only if `user.has_password` is true (Google-only accounts can set a password without providing a current one). |
+
+On submit: `PUT /api/auth/profile` → on success calls `updateUser(data)` to sync the header avatar and display name immediately, then shows an inline success message.
 
 ---
 

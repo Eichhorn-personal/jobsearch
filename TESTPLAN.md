@@ -41,9 +41,18 @@
 | `POST /api/auth/login` — unknown email | 401 (same timing as wrong password) |
 | `POST /api/auth/login` — missing body fields | 400 |
 | `POST /api/auth/logout` — authenticated | 204 |
-| `GET /api/auth/me` — valid token | 200, user object |
+| `GET /api/auth/me` — valid token | 200, user object with `display_name`, `photo`, `has_password` |
 | `GET /api/auth/me` — no token | 401 |
 | `GET /api/auth/me` — expired/invalid token | 401 |
+| `PUT /api/auth/profile` — update display_name | 200, updated user returned |
+| `PUT /api/auth/profile` — update photo (base64 data URL) | 200, photo stored |
+| `PUT /api/auth/profile` — photo too large (>300 KB) | 400 |
+| `PUT /api/auth/profile` — change password (correct current password) | 200 |
+| `PUT /api/auth/profile` — change password (wrong current password) | 401 |
+| `PUT /api/auth/profile` — set password on Google-only account (no current password required) | 200 |
+| `PUT /api/auth/profile` — new password too short (<8) | 400 |
+| `PUT /api/auth/profile` — no fields provided | 400 |
+| `PUT /api/auth/profile` — unauthenticated | 401 |
 | Rate limiter — 11 requests to `/login` in <15 min | 11th returns 429 |
 
 ### Jobs routes (`jobs.test.js`)
@@ -145,6 +154,27 @@
 | Navbar has `aria-label="Main navigation"` | landmark labelled |
 | Admin user sees Manage item | present in dropdown |
 | Contributor user does not see Manage | absent |
+| User with photo shows `<img>` avatar | letter span replaced by img |
+| Dropdown header shows display_name when set | display_name rendered, not username |
+| Edit Profile item links to /profile | present in dropdown |
+
+### ProfilePage (`ProfilePage.test.js`)
+
+| Test | Assertion |
+|------|-----------|
+| Renders Photo, Account, Password panels | all three section headers present |
+| Display name field pre-filled from user | input value equals user.display_name |
+| Email field is read-only | input has `readOnly` attribute |
+| Password section hidden by default | password inputs not in DOM |
+| "Change password" button reveals password inputs | inputs appear after click |
+| "Cancel" hides password section again | inputs removed from DOM |
+| "Current password" shown only when `has_password` is true | conditional render |
+| Save with mismatched passwords shows error | error message visible |
+| Save with short new password shows error | error message visible |
+| Successful save calls `updateUser` | mock verifies call with response data |
+| Google import banner shown when `authGooglePicture` set and no photo | banner rendered |
+| Google import banner hidden when user already has photo | banner not rendered |
+| Dismiss clears `authGooglePicture` from localStorage | key removed |
 
 ---
 

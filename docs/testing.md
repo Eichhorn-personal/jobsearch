@@ -4,8 +4,8 @@ Three test layers cover the full stack:
 
 | Layer | Tool | Count | Command |
 |-------|------|-------|---------|
-| Backend API | Jest + Supertest | 86 tests | `cd server && npm test` |
-| Frontend components | Jest + React Testing Library | 35 tests | `npm test` |
+| Backend API | Jest + Supertest | 86+ tests | `cd server && npm test` |
+| Frontend components | Jest + React Testing Library | 35+ tests | `npm test` |
 | End-to-end | Playwright | 21 tests | `npm run test:e2e` |
 
 ---
@@ -28,14 +28,23 @@ The tests import the Express `app` directly (from `server/app.js`) and use Super
 | Register — password < 8 chars | 400 |
 | Register — password > 128 chars | 400 |
 | Register — ALLOWED_EMAILS set, email not listed | 403 |
-| Login — correct credentials | 200, JWT returned |
+| Login — correct credentials | 200, JWT + user with display_name/photo/has_password |
 | Login — wrong password | 401 |
 | Login — unknown email | 401 (same response as wrong password — no user enumeration) |
 | Login — missing body fields | 400 |
 | Logout — authenticated | 204 |
-| `GET /api/auth/me` — valid token | 200, user object |
+| `GET /api/auth/me` — valid token | 200, user object with display_name/photo/has_password |
 | `GET /api/auth/me` — no token | 401 |
 | `GET /api/auth/me` — invalid token | 401 |
+| `PUT /api/auth/profile` — update display_name | 200, updated user returned |
+| `PUT /api/auth/profile` — update photo (base64 data URL) | 200, photo stored |
+| `PUT /api/auth/profile` — photo > 300 KB | 400 |
+| `PUT /api/auth/profile` — change password (correct current) | 200 |
+| `PUT /api/auth/profile` — change password (wrong current) | 401 |
+| `PUT /api/auth/profile` — set password on Google-only account | 200 (no current password required) |
+| `PUT /api/auth/profile` — new password < 8 chars | 400 |
+| `PUT /api/auth/profile` — no fields provided | 400 |
+| `PUT /api/auth/profile` — unauthenticated | 401 |
 
 ### `jobs.test.js` — 30 tests
 
@@ -137,7 +146,7 @@ The tests import the Express `app` directly (from `server/app.js`) and use Super
 | Submit valid form | `onAdd` called with correct shape |
 | … (edit mode, date normalisation, hide behaviour) | |
 
-### `Header.test.js` — 5 tests
+### `Header.test.js` — 8 tests
 
 | Test | What it verifies |
 |------|-----------------|
@@ -146,6 +155,27 @@ The tests import the Express `app` directly (from `server/app.js`) and use Super
 | Brand renders as a link | `role="link"` present |
 | Admin user sees Manage item after opening dropdown | conditional rendering |
 | Contributor user does not see Manage item | absent after dropdown opens |
+| User with photo renders `<img>` avatar instead of letter span | photo takes priority |
+| Dropdown header shows display_name when set | display_name replaces username |
+| Edit Profile item present in dropdown | links to /profile |
+
+### `ProfilePage.test.js` — 13 tests
+
+| Test | What it verifies |
+|------|-----------------|
+| Renders Photo, Account, Password panels | section headers present |
+| Display name input pre-filled from user | value equals `user.display_name` |
+| Email field is read-only | `readOnly` attribute set |
+| Password section hidden by default | password inputs absent |
+| "Change password" reveals password inputs | inputs appear after click |
+| "Cancel" hides password section | inputs removed from DOM |
+| "Current password" shown only when `has_password` is true | conditional render |
+| Save with mismatched passwords shows inline error | error message visible |
+| Save with short new password shows inline error | error message visible |
+| Successful save calls `updateUser` with response data | mock verified |
+| Google import banner shown when `authGooglePicture` set and no photo | banner rendered |
+| Google import banner hidden when user already has a photo | banner not rendered |
+| Dismiss removes `authGooglePicture` from localStorage | key cleared |
 
 ---
 
