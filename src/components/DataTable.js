@@ -35,6 +35,7 @@ export default function DataTable() {
   const [rows, setRows] = useState([]);
   const [dropdownOptions, setDropdownOptions] = useState({});
   const [statusColorMap, setStatusColorMap] = useState({});
+  const [searchTerm, setSearchTerm] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [viewingRow, setViewingRow] = useState(null);
@@ -106,8 +107,12 @@ export default function DataTable() {
   const toggleSelect = (row) =>
     setSelectedRow(prev => prev?.id === row.id ? null : row);
 
-  const activeRows   = rows.filter(r => !isArchived(r));
-  const archivedRows = rows.filter(r =>  isArchived(r));
+  const q = searchTerm.trim().toLowerCase();
+  const matchesSearch = (r) =>
+    !q || [(r.Role || ""), (r.Company || "")].some(v => v.toLowerCase().includes(q));
+
+  const activeRows   = rows.filter(r => !isArchived(r) && matchesSearch(r));
+  const archivedRows = rows.filter(r =>  isArchived(r) && matchesSearch(r));
 
   const renderRows = (rowSet) => rowSet.map(row => (
     <div
@@ -153,7 +158,7 @@ export default function DataTable() {
 
   return (
     <Container fluid className="p-0">
-      <div style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+      <div style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <button className="btn-compose" onClick={() => setShowAddModal(true)}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -161,6 +166,27 @@ export default function DataTable() {
           </svg>
           Add Job
         </button>
+
+        <div className="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            type="search"
+            placeholder="Search by role or company…"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            aria-label="Search jobs"
+          />
+          {searchTerm && (
+            <button className="search-clear" onClick={() => setSearchTerm("")} aria-label="Clear search">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          )}
+        </div>
+
         {selectedRow && (
           <>
             <button
