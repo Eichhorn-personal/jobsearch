@@ -1,3 +1,10 @@
+/* ── Global button rounding ──────────────────────────────────── */
+:root {
+  --bs-btn-border-radius: 16px;
+  --bs-btn-sm-border-radius: 14px;
+  --bs-btn-lg-border-radius: 20px;
+}
+
 /* ── Gmail-style header ─────────────────────────────────────── */
 .gmail-header {
   background: #ffffff;
@@ -84,7 +91,7 @@
   background: #ffffff;
   color: #3c4043;
   border: 1px solid #dadce0;
-  border-radius: 4px;
+  border-radius: 16px;
   padding: 8px 16px;
   font-size: 14px;
   font-weight: 500;
@@ -154,7 +161,7 @@
   background: #1a73e8;
   color: #ffffff;
   border: none;
-  border-radius: 4px;
+  border-radius: 16px;
   padding: 10px;
   font-size: 14px;
   font-weight: 500;
