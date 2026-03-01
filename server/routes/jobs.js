@@ -17,11 +17,7 @@ const DB_TO_FRONTEND = {
   resume: "Resume",
   cover_letter: "Cover Letter",
   status: "Status",
-  recruiter: "Recruiter",
-  hiring_mgr: "Hiring Mgr",
-  panel: "Panel",
-  hr: "HR",
-  comments: "Comments",
+  comments: "Notes",
 };
 
 const FRONTEND_TO_DB = Object.fromEntries(
@@ -35,11 +31,7 @@ function validateJobFields(body) {
   const checks = [
     [str(body["Role"]).length > 200,        "Role must be 200 characters or fewer"],
     [str(body["Company"]).length > 200,     "Company must be 200 characters or fewer"],
-    [str(body["Recruiter"]).length > 200,   "Recruiter must be 200 characters or fewer"],
-    [str(body["Hiring Mgr"]).length > 200,  "Hiring Mgr must be 200 characters or fewer"],
-    [str(body["Panel"]).length > 200,       "Panel must be 200 characters or fewer"],
-    [str(body["HR"]).length > 200,          "HR must be 200 characters or fewer"],
-    [str(body["Comments"]).length > 5000,   "Comments must be 5000 characters or fewer"],
+    [str(body["Notes"]).length > 5000,   "Notes must be 5000 characters or fewer"],
     [str(body["Source Link"]).length > 2000,  "Source Link must be 2000 characters or fewer"],
     [str(body["Company Link"]).length > 2000, "Company Link must be 2000 characters or fewer"],
     [body["Source Link"] && !URL_RE.test(body["Source Link"]),   "Source Link must start with http:// or https://"],
@@ -80,10 +72,10 @@ router.post("/", (req, res) => {
   const stmt = db.prepare(`
     INSERT INTO jobs
       (user_id, date, role, company, source_link, company_link,
-       resume, cover_letter, status, recruiter, hiring_mgr, panel, hr, comments)
+       resume, cover_letter, status, comments)
     VALUES
       (@user_id, @date, @role, @company, @source_link, @company_link,
-       @resume, @cover_letter, @status, @recruiter, @hiring_mgr, @panel, @hr, @comments)
+       @resume, @cover_letter, @status, @comments)
   `);
 
   const result = stmt.run({
@@ -96,11 +88,7 @@ router.post("/", (req, res) => {
     resume: body["Resume"] ? 1 : 0,
     cover_letter: body["Cover Letter"] ? 1 : 0,
     status: body["Status"] ?? "Applied",
-    recruiter: body["Recruiter"] ?? "",
-    hiring_mgr: body["Hiring Mgr"] ?? "",
-    panel: body["Panel"] ?? "",
-    hr: body["HR"] ?? "",
-    comments: body["Comments"] ?? "",
+    comments: body["Notes"] ?? "",
   });
 
   const created = db.prepare("SELECT * FROM jobs WHERE id = ?").get(result.lastInsertRowid);
@@ -128,10 +116,6 @@ router.put("/:id", (req, res) => {
       resume = @resume,
       cover_letter = @cover_letter,
       status = @status,
-      recruiter = @recruiter,
-      hiring_mgr = @hiring_mgr,
-      panel = @panel,
-      hr = @hr,
       comments = @comments,
       updated_at = datetime('now')
     WHERE id = @id
@@ -145,11 +129,7 @@ router.put("/:id", (req, res) => {
     resume: body["Resume"] !== undefined ? (body["Resume"] ? 1 : 0) : job.resume,
     cover_letter: body["Cover Letter"] !== undefined ? (body["Cover Letter"] ? 1 : 0) : job.cover_letter,
     status: body["Status"] ?? job.status,
-    recruiter: body["Recruiter"] ?? job.recruiter,
-    hiring_mgr: body["Hiring Mgr"] ?? job.hiring_mgr,
-    panel: body["Panel"] ?? job.panel,
-    hr: body["HR"] ?? job.hr,
-    comments: body["Comments"] ?? job.comments,
+    comments: body["Notes"] ?? job.comments,
   });
 
   const updated = db.prepare("SELECT * FROM jobs WHERE id = ?").get(req.params.id);

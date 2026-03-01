@@ -67,8 +67,8 @@ describe("POST /api/jobs", () => {
     expect(res.status).toBe(400);
   });
 
-  test("400 — comments exceed 5000 characters", async () => {
-    const res = await addJob(user, { Comments: "x".repeat(5001) });
+  test("400 — notes exceed 5000 characters", async () => {
+    const res = await addJob(user, { Notes: "x".repeat(5001) });
     expect(res.status).toBe(400);
   });
 

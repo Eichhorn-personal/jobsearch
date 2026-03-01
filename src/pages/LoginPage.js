@@ -134,13 +134,15 @@ export default function LoginPage() {
 
           {/* Google button */}
           <div className="d-flex justify-content-center mb-3">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => setError("Google sign-in was cancelled or failed")}
-              useOneTap={false}
-              text={mode === "login" ? "signin_with" : "signup_with"}
-              theme={theme === "dark" ? "filled_black" : "outline"}
-            />
+            <div style={theme === "dark" ? { background: "#131314", borderRadius: 4, overflow: "hidden" } : {}}>
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => setError("Google sign-in was cancelled or failed")}
+                useOneTap={false}
+                text={mode === "login" ? "signin_with" : "signup_with"}
+                theme={theme === "dark" ? "filled_black" : "outline"}
+              />
+            </div>
           </div>
 
           <div className="d-flex align-items-center mb-3 text-muted small">

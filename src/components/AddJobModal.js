@@ -17,11 +17,7 @@ const emptyForm = () => ({
   Resume: false,
   "Cover Letter": false,
   Status: "Applied",
-  Recruiter: "",
-  "Hiring Mgr": "",
-  Panel: "",
-  HR: "",
-  Comments: "",
+  Notes: "",
 });
 
 // Rendered with a `key` prop by the parent so it remounts fresh for each row.
@@ -286,49 +282,6 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
           </Row>
 
           <Row className="mb-3">
-            <Col sm={3}>
-              <Form.Group>
-                <Form.Label>Recruiter</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={form.Recruiter}
-                  onChange={e => set("Recruiter", e.target.value)}
-                />
-              </Form.Group>
-            </Col>
-            <Col sm={3}>
-              <Form.Group>
-                <Form.Label>Hiring Mgr</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={form["Hiring Mgr"]}
-                  onChange={e => set("Hiring Mgr", e.target.value)}
-                />
-              </Form.Group>
-            </Col>
-            <Col sm={3}>
-              <Form.Group>
-                <Form.Label>Panel</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={form.Panel}
-                  onChange={e => set("Panel", e.target.value)}
-                />
-              </Form.Group>
-            </Col>
-            <Col sm={3}>
-              <Form.Group>
-                <Form.Label>HR</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={form.HR}
-                  onChange={e => set("HR", e.target.value)}
-                />
-              </Form.Group>
-            </Col>
-          </Row>
-
-          <Row className="mb-3">
             <Col sm={6}>
               <Form.Group>
                 <Form.Label className="d-block">Resume</Form.Label>
@@ -354,12 +307,13 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
           </Row>
 
           <Form.Group>
-            <Form.Label>Comments</Form.Label>
+            <Form.Label>Notes</Form.Label>
             <Form.Control
               as="textarea"
-              rows={3}
-              value={form.Comments}
-              onChange={e => set("Comments", e.target.value)}
+              rows={8}
+              value={form.Notes}
+              onChange={e => set("Notes", e.target.value)}
+              style={{ whiteSpace: "pre-wrap" }}
             />
           </Form.Group>
         </Modal.Body>
