@@ -4,6 +4,7 @@ import { Form, Container } from "react-bootstrap";
 import { GoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import iconSrc from "../job-tracker-icon.svg";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -115,7 +116,7 @@ export default function LoginPage() {
 
           {/* Header */}
           <div className="text-center mb-4">
-            <img src="/logo192.png" alt="" width={48} height={48} style={{ borderRadius: "50%", marginBottom: 12 }} />
+            <img src={iconSrc} alt="" width={48} height={48} style={{ borderRadius: 10, marginBottom: 12 }} />
             <h1 style={{ fontSize: 20, fontWeight: 400, color: "#202124", margin: "0 0 4px" }}>
               {mode === "login" ? "Sign in" : "Create account"}
             </h1>
