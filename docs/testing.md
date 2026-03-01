@@ -4,9 +4,9 @@ Three test layers cover the full stack:
 
 | Layer | Tool | Count | Command |
 |-------|------|-------|---------|
-| Backend API | Jest + Supertest | 86 tests | `cd server && npm test` |
-| Frontend components | Jest + React Testing Library | 37 tests | `npm test` |
-| End-to-end | Playwright | 43 tests | `npm run test:e2e` |
+| Backend API | Jest + Supertest | 87 tests | `cd server && npm test` |
+| Frontend components | Jest + React Testing Library | 38 tests | `npm test` |
+| End-to-end | Playwright | 44 tests | `npm run test:e2e` |
 
 Run all three suites together with a timestamped log:
 ```bash
@@ -59,7 +59,8 @@ The tests import the Express `app` directly (from `server/app.js`) and use Super
 | `GET /api/jobs` — unauthenticated | 401 |
 | `POST /api/jobs` — valid body | 201, job with all fields returned |
 | `POST /api/jobs` — company > 200 chars | 400 |
-| `POST /api/jobs` — comments > 5000 chars | 400 |
+| `POST /api/jobs` — Notes > 5000 chars | 400 |
+| `POST /api/jobs` — Notes saved and returned as `Notes` (not `Comments`) | 201 |
 | `POST /api/jobs` — source_link not http(s) | 400 |
 | `PUT /api/jobs/:id` — own job | 200, updated |
 | `PUT /api/jobs/:id` — another user's job | 403 |
@@ -130,15 +131,15 @@ The tests import the Express `app` directly (from `server/app.js`) and use Super
 | Unauthenticated visits `/#/logs` | redirected to `/login` |
 | Admin visits `/#/logs` | LogsPage renders |
 
-### `DataTable.test.js` — 5 tests
+### `DataTable.test.js` — 6 tests
 
 | Test | What it verifies |
 |------|-----------------|
 | Renders element with `role="table"` | ARIA table structure |
 | Table has `aria-label="Job applications"` | accessible name |
-| Eye button has descriptive `aria-label` | includes Role + Company |
-| Delete button has descriptive `aria-label` | includes Role + Company |
-| Click delete button → modal shows | dialog with `aria-labelledby` |
+| Click row → Edit toolbar button appears | single-click selection model |
+| Click row → Delete toolbar button appears | single-click selection model |
+| Double-click row → edit modal opens with row data | `initialData` set on modal |
 | Confirm delete → row removed | row no longer in DOM |
 
 ### `AddJobModal.test.js` — 10 tests
@@ -214,7 +215,7 @@ The tests import the Express `app` directly (from `server/app.js`) and use Super
 | Invalid credentials shows error alert | Mock 401; fill form; submit; assert alert text |
 | Sign out returns to `/#/login` | Click avatar → Sign out; assert URL |
 
-### `jobs.spec.js` — 9 tests
+### `jobs.spec.js` — 10 tests
 
 Each test starts with auth pre-seeded and waits for the job table to be visible.
 
@@ -228,6 +229,7 @@ Each test starts with auth pre-seeded and waits for the job table to be visible.
 | Cancel delete keeps the row | Select row → Delete → Cancel; assert row still in table |
 | Confirm delete removes the row | Select row → Delete → Delete (exact match); assert row gone |
 | Edit toolbar button opens modal pre-filled | Select row → ✏ Edit; assert "Edit Job" title + input values |
+| Double-click opens edit modal directly | `dblclick` row; assert "Edit Job" dialog visible (no toolbar needed) |
 | Saving edit updates row inline | Select row → Edit; change Role; Save Changes; assert updated text |
 
 > **ARIA / selector notes**:

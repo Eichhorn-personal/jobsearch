@@ -87,6 +87,8 @@ jobtracker/
 │       ├── dateFormat.js          # formatDate(input) → "MM/DD/YYYY" or null; cleanJobUrl()
 │       └── statusColor.js         # statusClass(status) → CSS class; STATUS_COLORS picker list
 │
+├── scripts/
+│   └── import-jobs.js             # One-off CLI: bulk-import jobs from a JSON export via the production API
 ├── playwright.config.js           # Playwright config; auto-starts CRA on port 3000
 ├── package.json                   # Frontend deps + npm scripts (including test:e2e)
 ├── README.md                      # Project overview and quick-start

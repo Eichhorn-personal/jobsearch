@@ -93,6 +93,13 @@ describe("POST /api/jobs", () => {
     expect(res.status).toBe(201);
   });
 
+  test("Notes field is saved and returned as 'Notes'", async () => {
+    const res = await addJob(user, { Notes: "Follow up Monday" });
+    expect(res.status).toBe(201);
+    expect(res.body.Notes).toBe("Follow up Monday");
+    expect(res.body.Comments).toBeUndefined();
+  });
+
   test("boolean fields are returned as booleans", async () => {
     const res = await addJob(user, { Resume: true, "Cover Letter": false });
     expect(res.status).toBe(201);

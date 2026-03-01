@@ -112,7 +112,7 @@ Main job-tracking table.
 
 **Search**: A pill-shaped search box filters both the main and archived tables simultaneously by Role or Company substring (case-insensitive). Filtered rows are not rendered.
 
-**Row selection model**: Clicking a row selects it (highlights it and sets `selectedRow`). Toolbar "✏ Edit" and "✕ Delete" buttons appear when a row is selected. There are no per-row action buttons.
+**Row selection model**: Clicking a row selects it (highlights it and sets `selectedRow`). Toolbar "✏ Edit" and "✕ Delete" buttons appear when a row is selected. **Double-clicking** a row opens it directly in the edit modal without needing to select first. There are no per-row action buttons.
 
 **State**
 
@@ -169,6 +169,10 @@ A React Bootstrap `Modal` used for both adding and editing jobs. The parent pass
 
 **URL handling**: Source Link and Company Link have an `onPaste` handler that calls `cleanJobUrl()` to strip tracking parameters before the value is set. If the pasted text is already clean, the default paste behaviour runs unchanged.
 
+**Fields**: Date, Source Link (with auto-detect button), Role, Status, Company, Company Link, Resume checkbox, Cover Letter checkbox, Notes (8-row textarea with `white-space: pre-wrap`).
+
+**Auto-detect**: The magnifying-glass button next to Source Link calls `GET /api/scrape?url=...` and, on success, overwrites the Role and Company fields with the detected values regardless of current content.
+
 **Focus lock**: The modal uses `backdrop="static"` and `keyboard={false}` so it only closes when the user explicitly clicks Cancel or the submit button — not on outside click or Escape.
 
 **Note**: `Form.Group` does not use `controlId`, so the `<label>` elements are not programmatically associated with their `<input>` elements via `htmlFor`. In tests, select form inputs by type and index.
@@ -181,7 +185,7 @@ A React Bootstrap `Modal` used for both adding and editing jobs. The parent pass
 
 Handles both sign-in and register in one view, toggled by mode state.
 
-- Renders a `GoogleLogin` button (from `@react-oauth/google`)
+- Renders a `GoogleLogin` button (from `@react-oauth/google`). In dark mode the button is wrapped in a `#131314` div to suppress the white iframe flash while loading.
 - Email/password form below an "or" divider
 - Errors displayed in an `aria-live="polite"` + `role="alert"` region
 - Successful login or register → calls `AuthContext.login()` → navigates to `/#/`

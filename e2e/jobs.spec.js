@@ -111,6 +111,14 @@ test.describe("Jobs — edit", () => {
     await expect(textInputs.nth(2)).toHaveValue("Acme");     // Company
   });
 
+  test("double-clicking a row opens the edit modal directly", async ({ page }) => {
+    const table = page.getByRole("table", { name: /job applications/i });
+    await table.getByRole("row").filter({ hasText: /engineer/i }).dblclick();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    await expect(dialog.locator(".modal-title")).toContainText(/edit job/i);
+  });
+
   test("saving edit updates the row inline", async ({ page }) => {
     const table = page.getByRole("table", { name: /job applications/i });
     await table.getByRole("row").filter({ hasText: /engineer/i }).click();

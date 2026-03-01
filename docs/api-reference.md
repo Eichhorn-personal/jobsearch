@@ -202,11 +202,7 @@ The frontend uses space-delimited field names; the database uses snake_case. The
 | `Resume` | `resume` | boolean | Stored as 0/1 |
 | `Cover Letter` | `cover_letter` | boolean | Stored as 0/1 |
 | `Status` | `status` | string | Default `Applied` |
-| `Recruiter` | `recruiter` | string | Max 200 chars |
-| `Hiring Mgr` | `hiring_mgr` | string | Max 200 chars |
-| `Panel` | `panel` | string | Max 200 chars |
-| `HR` | `hr` | string | Max 200 chars |
-| `Comments` | `comments` | string | Max 5000 chars |
+| `Notes` | `comments` | string | Max 5000 chars |
 
 ---
 

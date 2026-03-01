@@ -1,4 +1,4 @@
-import { render, screen, waitFor, act } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { AuthProvider } from "../context/AuthContext";
@@ -6,7 +6,11 @@ import { useApi } from "../hooks/useApi";
 import DataTable from "./DataTable";
 
 jest.mock("../hooks/useApi", () => ({ useApi: jest.fn() }));
-jest.mock("./AddJobModal", () => () => null);
+// Render a sentinel when the modal is open in edit mode so double-click tests
+// can assert that the right row was passed as initialData.
+jest.mock("./AddJobModal", () => ({ show, initialData }) =>
+  show && initialData ? <div data-testid="edit-modal" data-role={initialData.Role} /> : null
+);
 
 const sampleJobs = [
   { id: 1, Role: "Engineer", Company: "Acme", Date: "01/15/2025", Status: "Applied" },
@@ -89,6 +93,23 @@ describe("DataTable — action buttons", () => {
         screen.getByRole("button", { name: /delete/i })
       ).toBeInTheDocument()
     );
+  });
+});
+
+// ── double-click to edit ──────────────────────────────────────────────────────
+
+describe("DataTable — double-click to edit", () => {
+  test("double-clicking a row opens the edit modal with that row's data", async () => {
+    renderDataTable();
+    await act(async () => {});
+    const dataRows = screen
+      .getAllByRole("row")
+      .filter((r) => r.getAttribute("aria-selected") !== null);
+    fireEvent.dblClick(dataRows[0]);
+    await waitFor(() =>
+      expect(screen.getByTestId("edit-modal")).toBeInTheDocument()
+    );
+    expect(screen.getByTestId("edit-modal").dataset.role).toBe("Engineer");
   });
 });
 
