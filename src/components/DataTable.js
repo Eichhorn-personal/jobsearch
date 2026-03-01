@@ -121,6 +121,7 @@ export default function DataTable() {
       role="row"
       aria-selected={selectedRow?.id === row.id}
       onClick={() => toggleSelect(row)}
+      onDoubleClick={() => setViewingRow(row)}
     >
       {COLUMNS.map(col => (
         <div key={col} className="sheet-cell" role="cell" style={COL_STYLE[col]}>
@@ -141,6 +142,7 @@ export default function DataTable() {
       key={row.id}
       className={`job-card${selectedRow?.id === row.id ? " job-card--selected" : ""}`}
       onClick={() => toggleSelect(row)}
+      onDoubleClick={() => setViewingRow(row)}
       role="row"
       aria-selected={selectedRow?.id === row.id}
     >
