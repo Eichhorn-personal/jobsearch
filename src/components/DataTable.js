@@ -7,6 +7,22 @@ import "../DataTable.css";
 
 const COLUMNS = ["Date", "Role", "Company", "Status"];
 
+const ARCHIVED_STATUSES = ["ghosted", "duplicate"];
+const isArchived = (row) => ARCHIVED_STATUSES.includes((row.Status || "").toLowerCase());
+
+function Chevron({ open }) {
+  return (
+    <svg
+      width="16" height="16" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      className={`archived-chevron${open ? " archived-chevron--open" : ""}`}
+      aria-hidden="true"
+    >
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}
+
 // Fixed px width for constrained columns; flex for fluid ones
 const COL_STYLE = {
   Date:    { width: 115,  flexShrink: 0 },
@@ -19,6 +35,7 @@ export default function DataTable() {
   const [rows, setRows] = useState([]);
   const [dropdownOptions, setDropdownOptions] = useState({});
   const [statusColorMap, setStatusColorMap] = useState({});
+  const [showArchived, setShowArchived] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [viewingRow, setViewingRow] = useState(null);
   const [confirmRow, setConfirmRow] = useState(null);
@@ -89,6 +106,51 @@ export default function DataTable() {
   const toggleSelect = (row) =>
     setSelectedRow(prev => prev?.id === row.id ? null : row);
 
+  const activeRows   = rows.filter(r => !isArchived(r));
+  const archivedRows = rows.filter(r =>  isArchived(r));
+
+  const renderRows = (rowSet) => rowSet.map(row => (
+    <div
+      key={row.id}
+      className={`sheet-grid sheet-row${selectedRow?.id === row.id ? " sheet-grid--selected" : ""}`}
+      role="row"
+      aria-selected={selectedRow?.id === row.id}
+      onClick={() => toggleSelect(row)}
+    >
+      {COLUMNS.map(col => (
+        <div key={col} className="sheet-cell" role="cell" style={COL_STYLE[col]}>
+          {col === "Status" ? (
+            <span className={`status-chip ${statusColorMap[row[col]] || statusClass(row[col])}`}>{row[col] ?? ""}</span>
+          ) : (
+            <span style={{ padding: "4px 10px", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {row[col] ?? ""}
+            </span>
+          )}
+        </div>
+      ))}
+    </div>
+  ));
+
+  const renderCards = (rowSet) => rowSet.map(row => (
+    <div
+      key={row.id}
+      className={`job-card${selectedRow?.id === row.id ? " job-card--selected" : ""}`}
+      onClick={() => toggleSelect(row)}
+      role="row"
+      aria-selected={selectedRow?.id === row.id}
+    >
+      <div className="job-card-main">
+        <div className="job-card-role">{row.Role || "—"}</div>
+        <div className="job-card-company">{row.Company || ""}</div>
+        <div className="job-card-meta">
+          {[row.Status, row.Date].filter(Boolean).join(" · ")}
+        </div>
+      </div>
+    </div>
+  ));
+
+  const archivedToggleClass = `archived-toggle ${showArchived ? "archived-toggle--expanded" : "archived-toggle--collapsed"}`;
+
   return (
     <Container fluid className="p-0">
       <div style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
@@ -150,61 +212,75 @@ export default function DataTable() {
         </Modal.Footer>
       </Modal>
 
+      {/* ── Main table ─────────────────────────────────────────────── */}
       <div className="job-cards d-md-none" aria-label="Job applications">
-        {rows.map(row => (
-          <div
-            key={row.id}
-            className={`job-card${selectedRow?.id === row.id ? " job-card--selected" : ""}`}
-            onClick={() => toggleSelect(row)}
-            role="row"
-            aria-selected={selectedRow?.id === row.id}
-          >
-            <div className="job-card-main">
-              <div className="job-card-role">{row.Role || "—"}</div>
-              <div className="job-card-company">{row.Company || ""}</div>
-              <div className="job-card-meta">
-                {[row.Status, row.Date].filter(Boolean).join(" · ")}
-              </div>
-            </div>
-          </div>
-        ))}
+        {renderCards(activeRows)}
       </div>
 
       <div className="sheet-scroll d-none d-md-block" role="table" aria-label="Job applications">
         <div role="rowgroup">
           <div className="sheet-grid sheet-header" role="row">
             {COLUMNS.map(col => (
-              <div key={col} className="sheet-cell" role="columnheader" style={COL_STYLE[col]}>
-                {col}
-              </div>
+              <div key={col} className="sheet-cell" role="columnheader" style={COL_STYLE[col]}>{col}</div>
             ))}
           </div>
         </div>
-
-        <div role="rowgroup">
-          {rows.map(row => (
-            <div
-              key={row.id}
-              className={`sheet-grid sheet-row${selectedRow?.id === row.id ? " sheet-grid--selected" : ""}`}
-              role="row"
-              aria-selected={selectedRow?.id === row.id}
-              onClick={() => toggleSelect(row)}
-            >
-              {COLUMNS.map(col => (
-                <div key={col} className="sheet-cell" role="cell" style={COL_STYLE[col]}>
-                  {col === "Status" ? (
-                    <span className={`status-chip ${statusColorMap[row[col]] || statusClass(row[col])}`}>{row[col] ?? ""}</span>
-                  ) : (
-                    <span style={{ padding: "4px 10px", overflow: "hidden", textOverflow: "ellipsis" }}>
-                      {row[col] ?? ""}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
+        <div role="rowgroup">{renderRows(activeRows)}</div>
       </div>
+
+      {/* ── Archived table (Ghosted / Duplicate) ───────────────────── */}
+      {archivedRows.length > 0 && (
+        <div style={{ marginTop: 16 }}>
+
+          {/* Mobile archived */}
+          <div className="d-md-none">
+            <button
+              className={archivedToggleClass}
+              onClick={() => setShowArchived(v => !v)}
+              aria-expanded={showArchived}
+            >
+              <span>Archived</span>
+              <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span className="status-chip status-withdrawn" style={{ fontSize: 11 }}>{archivedRows.length}</span>
+                <Chevron open={showArchived} />
+              </span>
+            </button>
+            {showArchived && (
+              <div className="job-cards" style={{ borderTop: "none", borderRadius: "0 0 8px 8px" }}>
+                {renderCards(archivedRows)}
+              </div>
+            )}
+          </div>
+
+          {/* Desktop archived */}
+          <div className="d-none d-md-block">
+            <button
+              className={archivedToggleClass}
+              onClick={() => setShowArchived(v => !v)}
+              aria-expanded={showArchived}
+            >
+              <span>Archived</span>
+              <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span className="status-chip status-withdrawn" style={{ fontSize: 11 }}>{archivedRows.length}</span>
+                <Chevron open={showArchived} />
+              </span>
+            </button>
+            {showArchived && (
+              <div className="sheet-scroll" style={{ borderRadius: "0 0 8px 8px" }} role="table" aria-label="Archived job applications">
+                <div role="rowgroup">
+                  <div className="sheet-grid sheet-header" role="row">
+                    {COLUMNS.map(col => (
+                      <div key={col} className="sheet-cell" role="columnheader" style={COL_STYLE[col]}>{col}</div>
+                    ))}
+                  </div>
+                </div>
+                <div role="rowgroup">{renderRows(archivedRows)}</div>
+              </div>
+            )}
+          </div>
+
+        </div>
+      )}
     </Container>
   );
 }
