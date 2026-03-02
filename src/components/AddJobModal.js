@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { Modal, Button, Form, Row, Col, Spinner, InputGroup } from "react-bootstrap";
 import { formatDate, cleanJobUrl } from "../utils/dateFormat";
+import { detectAts } from "../utils/atsDetect";
 import { useApi } from "../hooks/useApi";
 
 const today = () => {
@@ -14,6 +15,7 @@ const emptyForm = () => ({
   Company: "",
   "Job Board Link": "",
   "Direct Company Job Link": "",
+  ATS: "",
   Resume: false,
   "Cover Letter": false,
   Status: "Applied",
@@ -56,7 +58,11 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
     const cleaned = cleanJobUrl(pasted);
     if (cleaned !== pasted) {
       e.preventDefault();
-      set(field, cleaned);
+      if (field === "Direct Company Job Link") {
+        setForm(prev => ({ ...prev, "Direct Company Job Link": cleaned, ATS: detectAts(cleaned) || "" }));
+      } else {
+        set(field, cleaned);
+      }
     }
   };
 
@@ -159,13 +165,23 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
                     }
                   </Button>
                   <Form.Control
-                    type="url"
+                    type="text"
                     placeholder="https://"
                     value={form["Job Board Link"]}
                     onChange={e => { set("Job Board Link", e.target.value); setScrapeNote(null); }}
                     onPaste={handleUrlPaste("Job Board Link")}
                     autoFocus={!isEditing}
                   />
+                  <Button
+                    variant="outline-secondary"
+                    onClick={() => window.open(form["Job Board Link"], "_blank", "noopener,noreferrer")}
+                    disabled={!form["Job Board Link"]}
+                    title="Open in new tab"
+                    aria-label="Open job board link in new tab"
+                    style={{ zIndex: 0 }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  </Button>
                 </InputGroup>
                 {!scrapeNote && (
                   <div className="text-muted small mt-1 text-center">Paste the URL from a job board site and click the search icon to auto-parse the job listing</div>
@@ -276,13 +292,33 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
             <Col sm={4}>
               <Form.Group>
                 <Form.Label>Direct Company Job Link</Form.Label>
-                <Form.Control
-                  type="url"
-                  placeholder="https://"
-                  value={form["Direct Company Job Link"]}
-                  onChange={e => set("Direct Company Job Link", e.target.value)}
-                  onPaste={handleUrlPaste("Direct Company Job Link")}
-                />
+                <InputGroup>
+                  <Form.Control
+                    type="text"
+                    placeholder="https://"
+                    value={form["Direct Company Job Link"]}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setForm(prev => ({ ...prev, "Direct Company Job Link": val, ATS: detectAts(val) || "" }));
+                    }}
+                    onPaste={handleUrlPaste("Direct Company Job Link")}
+                  />
+                  <Button
+                    variant="outline-secondary"
+                    onClick={() => window.open(form["Direct Company Job Link"], "_blank", "noopener,noreferrer")}
+                    disabled={!form["Direct Company Job Link"]}
+                    title="Open in new tab"
+                    aria-label="Open company job link in new tab"
+                    style={{ zIndex: 0 }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  </Button>
+                </InputGroup>
+                {form["ATS"] && (
+                  <div className="text-muted small mt-1">
+                    Application portal: <strong>{form["ATS"]}</strong>
+                  </div>
+                )}
               </Form.Group>
             </Col>
           </Row>

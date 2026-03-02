@@ -41,6 +41,7 @@ db.exec(`
     panel        TEXT,
     hr           TEXT,
     comments     TEXT,
+    ats          TEXT,
     created_at   TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
   );
@@ -89,6 +90,11 @@ if (!userCols.includes("resume_link")) {
 const jobCols = db.pragma("table_info(jobs)").map((c) => c.name);
 if (jobCols.includes("source_link")) {
   db.exec("ALTER TABLE jobs RENAME COLUMN source_link TO job_board_link");
+}
+
+// Migration: add ats column to jobs
+if (!jobCols.includes("ats")) {
+  db.exec("ALTER TABLE jobs ADD COLUMN ats TEXT");
 }
 
 // Migration: add color column to dropdown_options

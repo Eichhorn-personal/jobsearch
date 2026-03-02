@@ -18,6 +18,7 @@ const DB_TO_FRONTEND = {
   cover_letter: "Cover Letter",
   status: "Status",
   comments: "Notes",
+  ats: "ATS",
 };
 
 const FRONTEND_TO_DB = Object.fromEntries(
@@ -72,10 +73,10 @@ router.post("/", (req, res) => {
   const stmt = db.prepare(`
     INSERT INTO jobs
       (user_id, date, role, company, job_board_link, company_link,
-       resume, cover_letter, status, comments)
+       resume, cover_letter, status, comments, ats)
     VALUES
       (@user_id, @date, @role, @company, @job_board_link, @company_link,
-       @resume, @cover_letter, @status, @comments)
+       @resume, @cover_letter, @status, @comments, @ats)
   `);
 
   const result = stmt.run({
@@ -89,6 +90,7 @@ router.post("/", (req, res) => {
     cover_letter: body["Cover Letter"] ? 1 : 0,
     status: body["Status"] ?? "Applied",
     comments: body["Notes"] ?? "",
+    ats: body["ATS"] || null,
   });
 
   const created = db.prepare("SELECT * FROM jobs WHERE id = ?").get(result.lastInsertRowid);
@@ -117,6 +119,7 @@ router.put("/:id", (req, res) => {
       cover_letter = @cover_letter,
       status = @status,
       comments = @comments,
+      ats = @ats,
       updated_at = datetime('now')
     WHERE id = @id
   `).run({
@@ -130,6 +133,7 @@ router.put("/:id", (req, res) => {
     cover_letter: body["Cover Letter"] !== undefined ? (body["Cover Letter"] ? 1 : 0) : job.cover_letter,
     status: body["Status"] ?? job.status,
     comments: body["Notes"] ?? job.comments,
+    ats: body["ATS"] !== undefined ? (body["ATS"] || null) : (job.ats || null),
   });
 
   const updated = db.prepare("SELECT * FROM jobs WHERE id = ?").get(req.params.id);
