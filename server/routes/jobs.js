@@ -13,7 +13,7 @@ const DB_TO_FRONTEND = {
   role: "Role",
   company: "Company",
   job_board_link: "Job Board Link",
-  company_link: "Company Link",
+  company_link: "Direct Company Job Link",
   resume: "Resume",
   cover_letter: "Cover Letter",
   status: "Status",
@@ -33,9 +33,9 @@ function validateJobFields(body) {
     [str(body["Company"]).length > 200,     "Company must be 200 characters or fewer"],
     [str(body["Notes"]).length > 5000,   "Notes must be 5000 characters or fewer"],
     [str(body["Job Board Link"]).length > 2000,  "Job Board Link must be 2000 characters or fewer"],
-    [str(body["Company Link"]).length > 2000, "Company Link must be 2000 characters or fewer"],
+    [str(body["Direct Company Job Link"]).length > 2000, "Direct Company Job Link must be 2000 characters or fewer"],
     [body["Job Board Link"] && !URL_RE.test(body["Job Board Link"]),   "Job Board Link must start with http:// or https://"],
-    [body["Company Link"] && !URL_RE.test(body["Company Link"]), "Company Link must start with http:// or https://"],
+    [body["Direct Company Job Link"] && !URL_RE.test(body["Direct Company Job Link"]), "Direct Company Job Link must start with http:// or https://"],
   ];
   for (const [failed, message] of checks) {
     if (failed) return message;
@@ -84,7 +84,7 @@ router.post("/", (req, res) => {
     role: body["Role"] ?? "",
     company: body["Company"] ?? "",
     job_board_link: body["Job Board Link"] ?? "",
-    company_link: body["Company Link"] ?? "",
+    company_link: body["Direct Company Job Link"] ?? "",
     resume: body["Resume"] ? 1 : 0,
     cover_letter: body["Cover Letter"] ? 1 : 0,
     status: body["Status"] ?? "Applied",
@@ -125,7 +125,7 @@ router.put("/:id", (req, res) => {
     role: body["Role"] ?? job.role,
     company: body["Company"] ?? job.company,
     job_board_link: body["Job Board Link"] ?? job.job_board_link,
-    company_link: body["Company Link"] ?? job.company_link,
+    company_link: body["Direct Company Job Link"] ?? job.company_link,
     resume: body["Resume"] !== undefined ? (body["Resume"] ? 1 : 0) : job.resume,
     cover_letter: body["Cover Letter"] !== undefined ? (body["Cover Letter"] ? 1 : 0) : job.cover_letter,
     status: body["Status"] ?? job.status,

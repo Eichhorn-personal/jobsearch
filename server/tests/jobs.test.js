@@ -78,7 +78,7 @@ describe("POST /api/jobs", () => {
   });
 
   test("400 — company_link with data: scheme rejected", async () => {
-    const res = await addJob(user, { "Company Link": "data:text/html,<h1>hi</h1>" });
+    const res = await addJob(user, { "Direct Company Job Link": "data:text/html,<h1>hi</h1>" });
     expect(res.status).toBe(400);
   });
 

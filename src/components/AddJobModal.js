@@ -13,7 +13,7 @@ const emptyForm = () => ({
   Role: "",
   Company: "",
   "Job Board Link": "",
-  "Company Link": "",
+  "Direct Company Job Link": "",
   Resume: false,
   "Cover Letter": false,
   Status: "Applied",
@@ -167,6 +167,9 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
                     autoFocus={!isEditing}
                   />
                 </InputGroup>
+                {!scrapeNote && (
+                  <div className="text-muted small mt-1 text-center">Paste the URL from a job board site and click the search icon to auto-parse the job listing</div>
+                )}
                 {scrapeNote === "ok" && (
                   <div className="text-success small mt-1">✓ Role and company detected</div>
                 )}
@@ -234,11 +237,11 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
           <Row className="mb-3">
             <Col sm={8}>
               <Form.Group>
-                <Form.Label>Role</Form.Label>
+                <Form.Label>Company</Form.Label>
                 <Form.Control
                   type="text"
-                  value={form.Role}
-                  onChange={e => set("Role", e.target.value)}
+                  value={form.Company}
+                  onChange={e => set("Company", e.target.value)}
                   required
                 />
               </Form.Group>
@@ -261,24 +264,24 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
           <Row className="mb-3">
             <Col sm={8}>
               <Form.Group>
-                <Form.Label>Company</Form.Label>
+                <Form.Label>Role</Form.Label>
                 <Form.Control
                   type="text"
-                  value={form.Company}
-                  onChange={e => set("Company", e.target.value)}
+                  value={form.Role}
+                  onChange={e => set("Role", e.target.value)}
                   required
                 />
               </Form.Group>
             </Col>
             <Col sm={4}>
               <Form.Group>
-                <Form.Label>Company Link</Form.Label>
+                <Form.Label>Direct Company Job Link</Form.Label>
                 <Form.Control
                   type="url"
                   placeholder="https://"
-                  value={form["Company Link"]}
-                  onChange={e => set("Company Link", e.target.value)}
-                  onPaste={handleUrlPaste("Company Link")}
+                  value={form["Direct Company Job Link"]}
+                  onChange={e => set("Direct Company Job Link", e.target.value)}
+                  onPaste={handleUrlPaste("Direct Company Job Link")}
                 />
               </Form.Group>
             </Col>
