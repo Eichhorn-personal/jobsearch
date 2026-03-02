@@ -175,7 +175,7 @@ describe("GET /api/auth/me", () => {
 
   test("401 — token signed with wrong secret", async () => {
     const jwt = require("jsonwebtoken");
-    const badToken = jwt.sign({ sub: 1, username: "x@x.com", role: "contributor" }, "wrong-secret");
+    const badToken = jwt.sign({ sub: 1, username: "x@x.com", role: "user" }, "wrong-secret");
     const res = await request(app)
       .get("/api/auth/me")
       .set("Authorization", `Bearer ${badToken}`);
@@ -189,6 +189,117 @@ describe("GET /api/auth/me", () => {
     const { getDb } = require("./helpers/db");
     getDb().prepare("DELETE FROM users WHERE id = ?").run(user.id);
     const res = await request(app).get("/api/auth/me").set(header);
+    expect(res.status).toBe(401);
+  });
+});
+
+// ── PUT /api/auth/profile ─────────────────────────────────────────────────────
+
+describe("PUT /api/auth/profile", () => {
+  let profileUser;
+  beforeEach(() => {
+    profileUser = createUser({ username: "profile@example.com" });
+  });
+
+  test("200 — update display_name", async () => {
+    const res = await request(app)
+      .put("/api/auth/profile")
+      .set(authHeader(profileUser))
+      .send({ display_name: "Jane Smith" });
+    expect(res.status).toBe(200);
+    expect(res.body.display_name).toBe("Jane Smith");
+  });
+
+  test("200 — update photo (base64 data URL)", async () => {
+    const photo = "data:image/jpeg;base64," + "A".repeat(100);
+    const res = await request(app)
+      .put("/api/auth/profile")
+      .set(authHeader(profileUser))
+      .send({ photo });
+    expect(res.status).toBe(200);
+    expect(res.body.photo).toBe(photo);
+  });
+
+  test("400 — photo exceeds 300 KB", async () => {
+    const photo = "data:image/jpeg;base64," + "A".repeat(300 * 1024 + 1);
+    const res = await request(app)
+      .put("/api/auth/profile")
+      .set(authHeader(profileUser))
+      .send({ photo });
+    expect(res.status).toBe(400);
+  });
+
+  test("200 — change password with correct current password", async () => {
+    const res = await request(app)
+      .put("/api/auth/profile")
+      .set(authHeader(profileUser))
+      .send({ current_password: "Password1!", new_password: "NewPass123!" });
+    expect(res.status).toBe(200);
+    expect(res.body.has_password).toBe(true);
+  });
+
+  test("401 — change password with wrong current password", async () => {
+    const res = await request(app)
+      .put("/api/auth/profile")
+      .set(authHeader(profileUser))
+      .send({ current_password: "wrong-password", new_password: "NewPass123!" });
+    expect(res.status).toBe(401);
+  });
+
+  test("200 — Google-only account can set password without current_password", async () => {
+    const { getDb } = require("./helpers/db");
+    const db = getDb();
+    const result = db
+      .prepare("INSERT INTO users (username, password, role) VALUES (?, ?, ?)")
+      .run("google-only@example.com", "", "user");
+    const googleUser = db
+      .prepare("SELECT id, username, role FROM users WHERE id = ?")
+      .get(result.lastInsertRowid);
+    const res = await request(app)
+      .put("/api/auth/profile")
+      .set(authHeader(googleUser))
+      .send({ new_password: "NewPass123!" });
+    expect(res.status).toBe(200);
+    expect(res.body.has_password).toBe(true);
+  });
+
+  test("400 — new password too short (< 8 chars)", async () => {
+    const res = await request(app)
+      .put("/api/auth/profile")
+      .set(authHeader(profileUser))
+      .send({ current_password: "Password1!", new_password: "short" });
+    expect(res.status).toBe(400);
+  });
+
+  test("400 — no fields provided", async () => {
+    const res = await request(app)
+      .put("/api/auth/profile")
+      .set(authHeader(profileUser))
+      .send({});
+    expect(res.status).toBe(400);
+  });
+
+  test("200 — update resume_link", async () => {
+    const res = await request(app)
+      .put("/api/auth/profile")
+      .set(authHeader(profileUser))
+      .send({ resume_link: "https://drive.google.com/file/d/abc123" });
+    expect(res.status).toBe(200);
+    expect(res.body.resume_link).toBe("https://drive.google.com/file/d/abc123");
+  });
+
+  test("400 — resume_link without http(s) prefix rejected", async () => {
+    const res = await request(app)
+      .put("/api/auth/profile")
+      .set(authHeader(profileUser))
+      .send({ resume_link: "ftp://files.example.com/resume.pdf" });
+    expect(res.status).toBe(400);
+  });
+
+  test("401 — unauthenticated", async () => {
+    const res = await request(app)
+      .put("/api/auth/profile")
+      .send({ display_name: "Anyone" });
     expect(res.status).toBe(401);
   });
 });

@@ -51,7 +51,7 @@ jobtracker/
 ├── src/
 │   ├── App.js                     # Route definitions and layout wrapper
 │   ├── App.test.js                # Placeholder (CRA requires ≥1 test file in src/)
-│   ├── AdminRoute.test.js         # Route guard tests for /admin and /logs
+│   ├── AdminRoute.test.js         # Route guard tests for /admin, /logs, and /site-admin
 │   ├── index.js                   # React root: GoogleOAuthProvider, ThemeProvider, HashRouter
 │   ├── setupTests.js              # jest-dom matchers; TextEncoder/Decoder polyfill
 │   ├── setupProxy.js              # Dev proxy: /api/* → localhost:3001
@@ -79,9 +79,10 @@ jobtracker/
 │   ├── pages/
 │   │   ├── LoginPage.js           # Email/password + Google OAuth login and register
 │   │   ├── LoginPage.test.js      # Heading, mode toggle, error display, accessibility
-│   │   ├── AdminPage.js           # User management, dropdown options, logs link, data export
+│   │   ├── AdminPage.js           # Dropdown options management (add/rename/reorder/delete)
+│   │   ├── SiteAdminPage.js       # User management, data export, logs link (ceichhorn@gmail.com only)
 │   │   ├── LogsPage.js            # Activity log viewer (newest-first)
-│   │   └── ProfilePage.js         # Edit display name, photo (upload or Google import), password
+│   │   └── ProfilePage.js         # Edit display name, photo (upload or Google import), resume link, password
 │   │
 │   └── utils/
 │       ├── dateFormat.js          # formatDate(input) → "MM/DD/YYYY" or null; cleanJobUrl()
@@ -99,7 +100,7 @@ jobtracker/
 ## Key relationships
 
 - `src/index.js` wraps `App` in `HashRouter`, `ThemeProvider`, and `GoogleOAuthProvider`
-- `App.js` defines routes; `ProtectedRoute` and `AdminRoute` guard them
+- `App.js` defines routes; `ProtectedRoute`, `AdminRoute`, and `SiteAdminRoute` guard them
 - `AuthContext` stores JWT + user in localStorage; `useApi` reads the token on every fetch
 - `authenticate.js` (middleware) verifies the JWT and re-fetches the user's role from SQLite on every request
 - `database.js` creates all tables on first run and applies schema migrations automatically

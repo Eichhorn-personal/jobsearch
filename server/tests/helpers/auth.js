@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const { getDb } = require("./db");
 
 // cost factor 1 keeps tests fast while still exercising the real bcrypt path
-function createUser({ username, password = "Password1!", role = "contributor" }) {
+function createUser({ username, password = "Password1!", role = "user" }) {
   const db = getDb();
   const hash = bcrypt.hashSync(password, 1);
   const result = db

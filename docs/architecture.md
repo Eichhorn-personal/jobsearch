@@ -36,6 +36,7 @@ All routes are hash-based (`/#/path`) because the app is hosted on GitHub Pages 
 | `/#/admin` | `AdminPage` | `AdminRoute` (role = `admin`) |
 | `/#/logs` | `LogsPage` | `AdminRoute` (role = `admin`) |
 | `/#/profile` | `ProfilePage` | `ProtectedRoute` (any logged-in user) |
+| `/#/site-admin` | `SiteAdminPage` | `SiteAdminRoute` (username = `ceichhorn@gmail.com`) |
 
 ## Backend
 
@@ -85,18 +86,18 @@ Role is **re-fetched from the database on every request** (not just read from th
 
 | Table | Key columns |
 |-------|-------------|
-| `users` | `id`, `username`, `password`, `google_id`, `role` (default `contributor`), `display_name`, `photo` (base64 data URL) |
+| `users` | `id`, `username`, `password`, `google_id`, `role` (default `user`), `display_name`, `photo` (base64 data URL), `resume_link` (URL string) |
 | `jobs` | `id`, `user_id → users.id CASCADE`, all job fields |
 | `dropdown_options` | `id`, `field_name`, `label`, `sort_order`, `color` (CSS class name, nullable) |
 
-**Admin seeding**: If `ADMIN_EMAIL` env var is set, the corresponding user's role is forced to `admin` every time the server starts. This handles ephemeral databases (e.g., Render free tier) where the DB is wiped on redeploy.
+**Admin seeding**: If `ADMIN_EMAIL` env var is set, the corresponding user's role is forced to `admin` every time the server starts. This handles ephemeral databases where the DB is wiped on redeploy.
 
 ## Deployment
 
 | Layer | Service | URL |
 |-------|---------|-----|
 | Frontend | GitHub Pages | https://eichhorn-personal.github.io/jobtracker |
-| Backend | Render.com | https://jobsearch-wc4q.onrender.com |
+| Backend | Fly.io | https://jobtracker-dctgiw.fly.dev |
 
 ### Frontend deploy
 
@@ -106,25 +107,25 @@ npm run deploy   # runs npm run build then gh-pages -d build
 
 Environment variable required in `.env.production`:
 ```
-REACT_APP_API_URL=https://jobsearch-wc4q.onrender.com
+REACT_APP_API_URL=https://jobtracker-dctgiw.fly.dev
 ```
 
 ### Backend deploy
 
-Auto-deploys to Render on every push to `master`. Required Render environment variables:
+Deploy to Fly.io with `fly deploy`. Required secrets (set via `fly secrets set`):
 
 | Variable | Source |
 |----------|--------|
-| `JWT_SECRET` | Set manually in Render dashboard |
-| `GOOGLE_CLIENT_ID` | Set manually in Render dashboard |
+| `JWT_SECRET` | Set manually via `fly secrets set` |
+| `GOOGLE_CLIENT_ID` | Set manually via `fly secrets set` |
 | `ALLOWED_ORIGINS` | `https://eichhorn-personal.github.io` |
 | `ADMIN_EMAIL` | Email address to grant admin role on startup |
 
-> **SQLite on Render**: A 1 GB persistent disk is mounted at `/var/data` and the DB path is set to `/var/data/jobtracker.db` via the `DB_PATH` env var, so data survives redeploys. The `ADMIN_EMAIL` mechanism additionally ensures the admin account role is enforced on every startup.
+> **SQLite on Fly.io**: A persistent volume (`jobtracker_data`) is mounted at `/data`. The DB path is set to `/data/jobtracker.db` via the `DB_PATH` env var so data survives redeploys. A single machine (`fly scale count 1`) is required since SQLite is single-writer. The `ADMIN_EMAIL` mechanism ensures the admin account role is enforced on every startup.
 
 ### Keep-alive
 
-A FreeCron job hits the backend's `/api/health` endpoint every 12 minutes to prevent Render cold starts.
+A FreeCron job hits the backend's `/api/health` endpoint every 12 minutes to prevent cold starts.
 
 ## Theme
 

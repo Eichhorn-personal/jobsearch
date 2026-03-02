@@ -23,6 +23,8 @@ Defines all routes and layout wrappers.
 
 **`AdminRoute`** — redirects to `/#/login` if unauthenticated; redirects to `/#/` if authenticated but not admin.
 
+**`SiteAdminRoute`** — redirects to `/#/login` if unauthenticated; redirects to `/#/` if the logged-in user's username is not `ceichhorn@gmail.com`.
+
 ### `PageLayout`
 
 Renders the full-page shell: skip link → `<Header>` → `<main id="main-content">` → `<Footer>`. Used by all protected routes.
@@ -39,7 +41,7 @@ const { user, login, logout, updateUser } = useAuth();
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `user` | `object \| null` | `{ id, username, role, display_name, photo, has_password }` — null when not logged in |
+| `user` | `object \| null` | `{ id, username, role, display_name, photo, resume_link, has_password }` — null when not logged in |
 | `login(token, userData, googlePicture?)` | function | Writes token + user to localStorage; optionally stores `googlePicture` URL as `authGooglePicture`; sets `user` state |
 | `logout()` | function | POSTs to `/api/auth/logout` (best-effort), clears localStorage (`authToken`, `authUser`, `authGooglePicture`), sets `user` to null |
 | `updateUser(updatedUser)` | function | Patches `authUser` in localStorage and updates `user` state — used by ProfilePage after a successful `PUT /api/auth/profile` |
@@ -91,6 +93,7 @@ Top navigation bar. Rendered inside `PageLayout` on all authenticated pages.
   - A circular `<img>` of `user.photo` if a photo is stored, otherwise a letter-avatar `<span>` with the first character of the username
   - Dropdown header shows `user.display_name` if set, otherwise `user.username`
   - Admin users see a **Manage** button linking to `/#/admin`
+  - Users whose username is `ceichhorn@gmail.com` also see an **Admin** link in the dropdown linking to `/#/site-admin`
   - All users see **Edit Profile** (links to `/#/profile`) and **Sign out**
 - `aria-label="Main navigation"` on the `<nav>` element
 
@@ -167,11 +170,11 @@ A React Bootstrap `Modal` used for both adding and editing jobs. The parent pass
 
 **Date handling**: The `Date` field accepts flexible input. On blur, `formatDate()` normalises it to `MM/DD/YYYY`. An inline error is shown if parsing fails; submission is blocked until it's fixed.
 
-**URL handling**: Source Link and Company Link have an `onPaste` handler that calls `cleanJobUrl()` to strip tracking parameters before the value is set. If the pasted text is already clean, the default paste behaviour runs unchanged.
+**URL handling**: Job Board Link and Direct Company Job Link have an `onPaste` handler that calls `cleanJobUrl()` to strip tracking parameters before the value is set. If the pasted text is already clean, the default paste behaviour runs unchanged.
 
-**Fields**: Date, Source Link (with auto-detect button), Role, Status, Company, Company Link, Resume checkbox, Cover Letter checkbox, Notes (8-row textarea with `white-space: pre-wrap`).
+**Fields**: Job Board Link (first, full-width, with auto-detect button and hint text), Date, Company, Status, Role, Direct Company Job Link, Resume checkbox, Cover Letter checkbox, Notes (8-row textarea with `white-space: pre-wrap`).
 
-**Auto-detect**: The magnifying-glass button next to Source Link calls `GET /api/scrape?url=...` and, on success, overwrites the Role and Company fields with the detected values regardless of current content.
+**Auto-detect**: The magnifying-glass button next to Job Board Link calls `GET /api/scrape?url=...` and, on success, overwrites the Role and Company fields with the detected values regardless of current content.
 
 **Focus lock**: The modal uses `backdrop="static"` and `keyboard={false}` so it only closes when the user explicitly clicks Cancel or the submit button — not on outside click or Escape.
 
@@ -197,11 +200,18 @@ Handles both sign-in and register in one view, toggled by mode state.
 
 Admin-only management console. Accessible at `/#/admin`.
 
+**Section**: Dropdown options — add/rename/reorder/delete options per field. For the **Status** field specifically, each option row also shows a chip preview and a color `<select>` (Auto / Blue / Orange / Green / Red / Grey). Changing the select immediately PUTs `{ color }` to `/api/dropdowns/option/:id` and updates both the preview and the main DataTable chips.
+
+---
+
+### `SiteAdminPage` — `src/pages/SiteAdminPage.js`
+
+Site-admin console. Accessible at `/#/site-admin`. Only the user with username `ceichhorn@gmail.com` can access it; all others are redirected to `/#/`.
+
 Sections:
 1. **Users** — table of all users; role dropdown (saves on change); delete button (confirms, cascades to jobs; cannot delete own account)
-2. **Dropdown options** — add/rename/reorder/delete options per field. For the **Status** field specifically, each option row also shows a chip preview and a color `<select>` (Auto / Blue / Orange / Green / Red / Grey). Changing the select immediately PUTs `{ color }` to `/api/dropdowns/option/:id` and updates both the preview and the main DataTable chips.
-3. **Download Data** — exports all jobs as a JSON file
-4. **View Logs** — navigates to `/#/logs`
+2. **Download Data** — exports all jobs as a JSON file
+3. **View Logs** — navigates to `/#/logs`
 
 ---
 
@@ -222,6 +232,7 @@ User profile editor. Accessible at `/#/profile` (any logged-in user).
 | **Google photo banner** | Shown once per login session (if `authGooglePicture` is in localStorage and the user has no stored photo). "Import" fetches the photo server-side via `PUT /api/auth/profile` with `google_picture_url`; "Dismiss" clears the localStorage key. |
 | **Photo** | 96×96 circular preview. "Change photo" opens a hidden `<input type="file">`; the selected image is cover-cropped and resized to 96×96 JPEG via `<canvas>` before storing as a base64 data URL. "Remove" clears the photo. |
 | **Account** | Display name text input (editable); email address (read-only). |
+| **Resume** | URL input for a link to the user's current resume. A **View** button opens the link in a new tab (disabled when the field is empty). |
 | **Password** | Hidden by default; toggled with "Change password". Shows "Current password" only if `user.has_password` is true (Google-only accounts can set a password without providing a current one). |
 
 On submit: `PUT /api/auth/profile` → on success calls `updateUser(data)` to sync the header avatar and display name immediately, then shows an inline success message.
@@ -279,7 +290,7 @@ cleanJobUrl("https://www.indeed.com/viewjob?jk=abc123&utm_source=google") // →
 cleanJobUrl("not a url") // → "not a url" (returned as-is)
 ```
 
-Strips tracking parameters and hash fragments from job URLs. Called `onPaste` in `AddJobModal` for the Source Link and Company Link fields.
+Strips tracking parameters and hash fragments from job URLs. Called `onPaste` in `AddJobModal` for the Job Board Link and Direct Company Job Link fields.
 
 **Strategy**: two-tier.
 

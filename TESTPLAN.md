@@ -52,19 +52,24 @@
 | `PUT /api/auth/profile` — set password on Google-only account (no current password required) | 200 |
 | `PUT /api/auth/profile` — new password too short (<8) | 400 |
 | `PUT /api/auth/profile` — no fields provided | 400 |
+| `PUT /api/auth/profile` — update resume_link | 200, resume_link in response |
+| `PUT /api/auth/profile` — resume_link without http(s) prefix | 400 |
 | `PUT /api/auth/profile` — unauthenticated | 401 |
-| Rate limiter — 11 requests to `/login` in <15 min | 11th returns 429 |
 
 ### Jobs routes (`jobs.test.js`)
 
 | Test | Assertion |
 |------|-----------|
-| `GET /api/jobs` — authenticated | 200, array |
+| `GET /api/jobs` — authenticated | 200, array of user's own jobs |
 | `GET /api/jobs` — unauthenticated | 401 |
 | `POST /api/jobs` — valid body | 201, job returned |
 | `POST /api/jobs` — company name >200 chars | 400 |
-| `POST /api/jobs` — comments >5000 chars | 400 |
-| `POST /api/jobs` — source_link not starting with http | 400 |
+| `POST /api/jobs` — role name >200 chars | 400 |
+| `POST /api/jobs` — Notes >5000 chars | 400 |
+| `POST /api/jobs` — Job Board Link with `javascript:` scheme | 400 |
+| `POST /api/jobs` — Direct Company Job Link with `data:` scheme | 400 |
+| `POST /api/jobs` — valid `https://` Job Board Link | 201 |
+| `POST /api/jobs` — Notes saved and returned as `Notes` (not `Comments`) | 201 |
 | `PUT /api/jobs/:id` — own job | 200, updated |
 | `PUT /api/jobs/:id` — another user's job | 403 |
 | `DELETE /api/jobs/:id` — own job | 204 |
@@ -76,7 +81,7 @@
 | Test | Assertion |
 |------|-----------|
 | `GET /api/users` — admin token | 200, array (no passwords) |
-| `GET /api/users` — contributor token | 403 |
+| `GET /api/users` — user token | 403 |
 | `PUT /api/users/:id/role` — admin promotes user | 200, updated role |
 | `PUT /api/users/:id/role` — invalid role value | 400 |
 | `DELETE /api/users/:id` — admin deletes user | 204; user's jobs also deleted |
@@ -87,17 +92,17 @@
 | Test | Assertion |
 |------|-----------|
 | `GET /api/logs` — admin token | 200, array |
-| `GET /api/logs` — contributor token | 403 |
+| `GET /api/logs` — user token | 403 |
 | `GET /api/logs` — unauthenticated | 401 |
 
 ### Dropdowns route (`dropdowns.test.js`)
 
 | Test | Assertion |
 |------|-----------|
-| `GET /api/dropdowns` — contributor | 200 |
-| `POST /api/dropdowns/:field` — contributor | 403 |
+| `GET /api/dropdowns` — user token | 200 |
+| `POST /api/dropdowns/:field` — user token | 403 |
 | `POST /api/dropdowns/:field` — admin | 201 |
-| `DELETE /api/dropdowns/option/:id` — contributor | 403 |
+| `DELETE /api/dropdowns/option/:id` — user token | 403 |
 | `DELETE /api/dropdowns/option/:id` — admin | 204 |
 
 ---
@@ -119,31 +124,43 @@
 
 | Test | Assertion |
 |------|-----------|
-| Contributor user visits `/admin` | redirected to `/` |
+| Regular user visits `/admin` | redirected to `/` |
 | Unauthenticated user visits `/admin` | redirected to `/login` |
 | Admin user visits `/admin` | AdminPage renders |
-| Contributor user visits `/logs` | redirected to `/` |
+| Regular user visits `/logs` | redirected to `/` |
 | Unauthenticated user visits `/logs` | redirected to `/login` |
 | Admin user visits `/logs` | LogsPage renders |
+| Regular user visits `/site-admin` | redirected to `/` |
+| Unauthenticated user visits `/site-admin` | redirected to `/login` |
+| Admin (non-ceichhorn) visits `/site-admin` | redirected to `/` |
+| `ceichhorn@gmail.com` visits `/site-admin` | SiteAdminPage renders |
 
 ### DataTable (`DataTable.test.js`)
 
 | Test | Assertion |
 |------|-----------|
-| Renders ARIA table roles | `role="table"` present |
-| Eye button has accessible label | `aria-label` contains job role + company |
-| Delete button has accessible label | `aria-label` contains job role + company |
-| Click delete button — modal appears | modal with `aria-labelledby` rendered |
-| Confirm delete — job removed from DOM | row no longer present |
+| Renders element with `role="table"` | ARIA structure present |
+| Table has `aria-label="Job applications"` | accessible name |
+| Click row → Edit toolbar button appears | selection model |
+| Click row → Delete toolbar button appears | selection model |
+| Double-click row → edit modal with row data | `initialData` set |
+| Click delete → confirmation dialog appears | dialog rendered |
+| Confirm dialog has `aria-labelledby` | accessible modal |
+| Confirm delete → row removed from table | row gone from DOM |
 
 ### AddJobModal (`AddJobModal.test.js`)
 
 | Test | Assertion |
 |------|-----------|
-| Modal has `aria-labelledby` pointing to title | wired correctly |
-| Invalid date shows error with id | `id="date-error"` present; input has `aria-describedby` |
-| Submit with date error blocked | `onAdd` not called |
-| Submit valid form | `onAdd` called with correct data |
+| Dialog has `aria-labelledby="add-job-modal-title"` | ARIA wiring |
+| Title element has `id="add-job-modal-title"` | ARIA wiring |
+| Invalid date shows error with `id="date-error"` | error element present |
+| Date input gains `aria-describedby="date-error"` when invalid | ARIA association |
+| Submit button disabled when date is invalid | blocked |
+| `onSave` not called when date is invalid | submission blocked |
+| Submit add form with valid date calls `onAdd` | form submission |
+| Edit mode title says "Edit Job" | mode detection |
+| Edit mode submit button says "Save Changes" | mode detection |
 
 ### Header (`Header.test.js`)
 
@@ -153,28 +170,30 @@
 | Brand is a link | renders as `<a>` |
 | Navbar has `aria-label="Main navigation"` | landmark labelled |
 | Admin user sees Manage item | present in dropdown |
-| Contributor user does not see Manage | absent |
+| Regular user does not see Manage | absent |
 | User with photo shows `<img>` avatar | letter span replaced by img |
 | Dropdown header shows display_name when set | display_name rendered, not username |
 | Edit Profile item links to /profile | present in dropdown |
+| `ceichhorn@gmail.com` sees Admin link in dropdown | site-admin link present |
+| Other admin does not see Admin link | site-admin link absent |
 
 ### ProfilePage (`ProfilePage.test.js`)
 
 | Test | Assertion |
 |------|-----------|
-| Renders Photo, Account, Password panels | all three section headers present |
-| Display name field pre-filled from user | input value equals user.display_name |
+| Renders Photo, Account, Resume, Password panel headers | all four section headers present |
+| Display name input pre-filled from `user.display_name` | input value equals display name |
 | Email field is read-only | input has `readOnly` attribute |
-| Password section hidden by default | password inputs not in DOM |
-| "Change password" button reveals password inputs | inputs appear after click |
-| "Cancel" hides password section again | inputs removed from DOM |
+| Password inputs hidden by default | New/Confirm inputs not in DOM |
+| "Change password" reveals password inputs | inputs appear after click |
+| "Cancel" hides password section | inputs removed from DOM |
 | "Current password" shown only when `has_password` is true | conditional render |
-| Save with mismatched passwords shows error | error message visible |
-| Save with short new password shows error | error message visible |
-| Successful save calls `updateUser` | mock verifies call with response data |
+| Mismatched passwords shows inline error | `role="alert"` with message |
+| New password too short shows inline error | `role="alert"` with 8/128 message |
+| Successful save shows success message | `role="status"` with "Profile saved." |
 | Google import banner shown when `authGooglePicture` set and no photo | banner rendered |
-| Google import banner hidden when user already has photo | banner not rendered |
-| Dismiss clears `authGooglePicture` from localStorage | key removed |
+| Google import banner not shown when user already has a photo | banner not rendered |
+| Dismiss removes `authGooglePicture` from localStorage | key cleared |
 
 ---
 

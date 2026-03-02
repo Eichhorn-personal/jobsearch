@@ -8,7 +8,7 @@ let admin, contributor;
 beforeEach(() => {
   resetDb();
   admin = createUser({ username: "admin@example.com", role: "admin" });
-  contributor = createUser({ username: "user@example.com", role: "contributor" });
+  contributor = createUser({ username: "user@example.com", role: "user" });
 });
 
 function seedOption(fieldName, label, sort_order = 0) {

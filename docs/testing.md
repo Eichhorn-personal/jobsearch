@@ -4,8 +4,8 @@ Three test layers cover the full stack:
 
 | Layer | Tool | Count | Command |
 |-------|------|-------|---------|
-| Backend API | Jest + Supertest | 87 tests | `cd server && npm test` |
-| Frontend components | Jest + React Testing Library | 38 tests | `npm test` |
+| Backend API | Jest + Supertest | 98 tests | `cd server && npm test` |
+| Frontend components | Jest + React Testing Library | 57 tests | `npm test` |
 | End-to-end | Playwright | 44 tests | `npm run test:e2e` |
 
 Run all three suites together with a timestamped log:
@@ -23,83 +23,70 @@ npm run test:all   # node scripts/run-tests.js
 
 The tests import the Express `app` directly (from `server/app.js`) and use Supertest to make HTTP requests. No server port is bound; no real file I/O.
 
-### `auth.test.js` — 14 tests
+### `auth.test.js` — 32 tests
+
+**Register (8)**: valid email+password (201); duplicate email (409); invalid email format (400); password < 8 chars (400); password > 128 chars (400); missing password (400); ALLOWED_EMAILS set and email not listed (403); email in ALLOWED_EMAILS accepted (201).
+
+**Login (6)**: correct credentials (200, JWT + user); wrong password (401); unknown email (401, same as wrong password); missing password (400); missing username (400); invalid email format (400).
+
+**Logout (2)**: authenticated (204); unauthenticated (401).
+
+**`GET /api/auth/me` (5)**: valid token (200, user without password field); no token (401); malformed token (401); token signed with wrong secret (401); token for deleted user (401).
+
+**`PUT /api/auth/profile` (11)**:
 
 | Test | What it verifies |
 |------|-----------------|
-| Register valid email + password | 201, user returned |
-| Register — duplicate email | 409 |
-| Register — invalid email format | 400 |
-| Register — password < 8 chars | 400 |
-| Register — password > 128 chars | 400 |
-| Register — ALLOWED_EMAILS set, email not listed | 403 |
-| Login — correct credentials | 200, JWT + user with display_name/photo/has_password |
-| Login — wrong password | 401 |
-| Login — unknown email | 401 (same response as wrong password — no user enumeration) |
-| Login — missing body fields | 400 |
-| Logout — authenticated | 204 |
-| `GET /api/auth/me` — valid token | 200, user object with display_name/photo/has_password |
-| `GET /api/auth/me` — no token | 401 |
-| `GET /api/auth/me` — invalid token | 401 |
-| `PUT /api/auth/profile` — update display_name | 200, updated user returned |
-| `PUT /api/auth/profile` — update photo (base64 data URL) | 200, photo stored |
-| `PUT /api/auth/profile` — photo > 300 KB | 400 |
-| `PUT /api/auth/profile` — change password (correct current) | 200 |
-| `PUT /api/auth/profile` — change password (wrong current) | 401 |
-| `PUT /api/auth/profile` — set password on Google-only account | 200 (no current password required) |
-| `PUT /api/auth/profile` — new password < 8 chars | 400 |
-| `PUT /api/auth/profile` — no fields provided | 400 |
-| `PUT /api/auth/profile` — unauthenticated | 401 |
+| update display_name | 200, display_name in response |
+| update photo (base64 data URL) | 200, photo stored |
+| photo exceeds 300 KB | 400 |
+| change password — correct current password | 200, has_password true |
+| change password — wrong current password | 401 |
+| Google-only account sets password without current_password | 200, has_password true |
+| new password too short (< 8 chars) | 400 |
+| no fields provided | 400 |
+| update resume_link | 200, resume_link in response |
+| resume_link without http(s) prefix | 400 |
+| unauthenticated | 401 |
 
-### `jobs.test.js` — 30 tests
+### `jobs.test.js` — 24 tests
 
-| Test | What it verifies |
-|------|-----------------|
-| `GET /api/jobs` — authenticated | 200, array of user's jobs |
-| `GET /api/jobs` — unauthenticated | 401 |
-| `POST /api/jobs` — valid body | 201, job with all fields returned |
-| `POST /api/jobs` — company > 200 chars | 400 |
-| `POST /api/jobs` — Notes > 5000 chars | 400 |
-| `POST /api/jobs` — Notes saved and returned as `Notes` (not `Comments`) | 201 |
-| `POST /api/jobs` — source_link not http(s) | 400 |
-| `PUT /api/jobs/:id` — own job | 200, updated |
-| `PUT /api/jobs/:id` — another user's job | 403 |
-| `DELETE /api/jobs/:id` — own job | 204 |
-| `DELETE /api/jobs/:id` — another user's job | 403 |
-| `DELETE /api/jobs/:id` — nonexistent id | 404 |
-| … (additional field validation and auth coverage) | |
+**`GET /api/jobs` (3)**: authenticated (200, array); unauthenticated (401); returns only requesting user's jobs.
 
-### `users.test.js` — 23 tests
+**`POST /api/jobs` (11)**: valid body (201); unauthenticated (401); company > 200 chars (400); role > 200 chars (400); Notes > 5000 chars (400); Job Board Link with `javascript:` scheme (400); Direct Company Job Link with `data:` scheme (400); valid `https://` Job Board Link (201); empty Job Board Link (201); Notes saved and returned as `Notes` not `Comments` (201); boolean fields returned as booleans (201).
 
-| Test | What it verifies |
-|------|-----------------|
-| `GET /api/users` — admin token | 200, array (no passwords) |
-| `GET /api/users` — contributor token | 403 |
-| `PUT /api/users/:id/role` — admin promotes user | 200, updated role |
-| `PUT /api/users/:id/role` — invalid role value | 400 |
-| `DELETE /api/users/:id` — admin deletes other user | 204; user's jobs also deleted |
-| `DELETE /api/users/:id` — admin deletes own account | 400 |
-| … (unauthenticated access, edge cases) | |
+**`PUT /api/jobs/:id` (5)**: own job (200, updated); another user's job (403); nonexistent job (404); invalid URL on update (400); unauthenticated (401).
 
-### `logs.test.js` — 7 tests
+**`DELETE /api/jobs/:id` (5)**: own job (204); job actually removed; another user's job (403); nonexistent job (404); unauthenticated (401).
+
+### `users.test.js` — 17 tests
+
+**`GET /api/users` (4)**: admin (200, array); response excludes passwords; user token (403); unauthenticated (401).
+
+**`PUT /api/users/:id/role` (6)**: admin promotes user (200); admin demotes admin (200); invalid role value (400); nonexistent user (404); user cannot change roles (403); unauthenticated (401).
+
+**`DELETE /api/users/:id` (7)**: admin deletes another user (204); deleted user gone from list; deleting user cascades to their jobs; admin cannot delete own account (400); user cannot delete users (403); nonexistent user (404); unauthenticated (401).
+
+### `logs.test.js` — 4 tests
 
 | Test | What it verifies |
 |------|-----------------|
 | `GET /api/logs` — admin token | 200, array of log entries |
-| `GET /api/logs` — contributor token | 403 |
+| `GET /api/logs` — user token | 403 |
 | `GET /api/logs` — unauthenticated | 401 |
-| … (log format, entry count) | |
+| entries returned newest-first | second entry precedes first in response |
 
-### `dropdowns.test.js` — 12 tests
+### `dropdowns.test.js` — 21 tests
 
-| Test | What it verifies |
-|------|-----------------|
-| `GET /api/dropdowns` — contributor | 200 |
-| `POST /api/dropdowns/:field` — contributor | 403 |
-| `POST /api/dropdowns/:field` — admin | 201 |
-| `DELETE /api/dropdowns/option/:id` — contributor | 403 |
-| `DELETE /api/dropdowns/option/:id` — admin | 204 |
-| … (reorder, rename, edge cases) | |
+**`GET /api/dropdowns` (4)**: user token (200); admin token (200); unauthenticated (401); options grouped by field name.
+
+**`POST /api/dropdowns/:fieldName` (5)**: admin adds option (201); user token (403); duplicate label (409); empty label (400); unauthenticated (401).
+
+**`PUT /api/dropdowns/option/:id` rename (4)**: admin renames (200); user token (403); nonexistent option (404); unauthenticated (401).
+
+**`PUT /api/dropdowns/:fieldName/reorder` (3)**: admin reorders (200); user token (403); orderedIds not an array (400).
+
+**`DELETE /api/dropdowns/option/:id` (5)**: admin deletes (204); option actually removed; user token (403); nonexistent option (404); unauthenticated (401).
 
 ---
 
@@ -120,18 +107,22 @@ The tests import the Express `app` directly (from `server/app.js`) and use Super
 | Error container has `aria-live="polite"` | live region announced to screen readers |
 | Mode toggle buttons have `type="button"` | don't accidentally submit the form |
 
-### `AdminRoute.test.js` — 6 tests
+### `AdminRoute.test.js` — 10 tests
 
 | Test | What it verifies |
 |------|-----------------|
-| Contributor visits `/#/admin` | redirected to `/` |
+| Regular user visits `/#/admin` | redirected to `/` |
 | Unauthenticated visits `/#/admin` | redirected to `/login` |
 | Admin visits `/#/admin` | AdminPage renders |
-| Contributor visits `/#/logs` | redirected to `/` |
+| Regular user visits `/#/logs` | redirected to `/` |
 | Unauthenticated visits `/#/logs` | redirected to `/login` |
 | Admin visits `/#/logs` | LogsPage renders |
+| Regular user visits `/#/site-admin` | redirected to `/` |
+| Unauthenticated visits `/#/site-admin` | redirected to `/login` |
+| Admin (non-ceichhorn) visits `/#/site-admin` | redirected to `/` |
+| `ceichhorn@gmail.com` visits `/#/site-admin` | SiteAdminPage renders |
 
-### `DataTable.test.js` — 6 tests
+### `DataTable.test.js` — 8 tests
 
 | Test | What it verifies |
 |------|-----------------|
@@ -140,19 +131,25 @@ The tests import the Express `app` directly (from `server/app.js`) and use Super
 | Click row → Edit toolbar button appears | single-click selection model |
 | Click row → Delete toolbar button appears | single-click selection model |
 | Double-click row → edit modal opens with row data | `initialData` set on modal |
-| Confirm delete → row removed | row no longer in DOM |
+| Click delete toolbar button → confirmation dialog appears | dialog rendered |
+| Confirm dialog has `aria-labelledby="confirm-delete-title"` | accessible modal |
+| Confirm delete → row removed from table | row no longer in DOM |
 
-### `AddJobModal.test.js` — 10 tests
+### `AddJobModal.test.js` — 9 tests
 
 | Test | What it verifies |
 |------|-----------------|
-| Modal has `aria-labelledby` on the dialog | wired to title element |
-| Invalid date shows error with `id="date-error"` | `aria-describedby` set on input |
-| Submit blocked when date error is active | `onAdd` not called |
-| Submit valid form | `onAdd` called with correct shape |
-| … (edit mode, date normalisation, hide behaviour) | |
+| Dialog has `aria-labelledby="add-job-modal-title"` | ARIA wiring |
+| Title element has `id="add-job-modal-title"` | ARIA wiring |
+| Invalid date shows error with `id="date-error"` | error element present |
+| Date input gains `aria-describedby="date-error"` when invalid | ARIA association |
+| Submit button disabled when date is invalid | blocked by date error |
+| `onSave` not called when date is invalid | submission blocked |
+| Submit add form with valid date calls `onAdd` | form submission |
+| Edit mode title says "Edit Job" | mode detection |
+| Edit mode submit button says "Save Changes" | mode detection |
 
-### `Header.test.js` — 8 tests
+### `Header.test.js` — 10 tests
 
 | Test | What it verifies |
 |------|-----------------|
@@ -160,27 +157,29 @@ The tests import the Express `app` directly (from `server/app.js`) and use Super
 | Logo image has `alt=""` | decorative, not announced |
 | Brand renders as a link | `role="link"` present |
 | Admin user sees Manage item after opening dropdown | conditional rendering |
-| Contributor user does not see Manage item | absent after dropdown opens |
+| Regular user does not see Manage item | absent after dropdown opens |
 | User with photo renders `<img>` avatar instead of letter span | photo takes priority |
 | Dropdown header shows display_name when set | display_name replaces username |
 | Edit Profile item present in dropdown | links to /profile |
+| `ceichhorn@gmail.com` sees Admin link in dropdown | site-admin link present |
+| Other admin does not see Admin link | site-admin link absent |
 
 ### `ProfilePage.test.js` — 13 tests
 
 | Test | What it verifies |
 |------|-----------------|
-| Renders Photo, Account, Password panels | section headers present |
-| Display name input pre-filled from user | value equals `user.display_name` |
+| Renders Photo, Account, Resume, Password panel headers | all four sections present |
+| Display name input pre-filled from `user.display_name` | value equals display name |
 | Email field is read-only | `readOnly` attribute set |
-| Password section hidden by default | password inputs absent |
+| Password inputs hidden by default | New/Confirm inputs absent |
 | "Change password" reveals password inputs | inputs appear after click |
 | "Cancel" hides password section | inputs removed from DOM |
 | "Current password" shown only when `has_password` is true | conditional render |
-| Save with mismatched passwords shows inline error | error message visible |
-| Save with short new password shows inline error | error message visible |
-| Successful save calls `updateUser` with response data | mock verified |
+| Mismatched passwords shows inline error | `role="alert"` contains message |
+| New password too short shows inline error | `role="alert"` contains 8/128 message |
+| Successful save shows success message | `role="status"` contains "Profile saved." |
 | Google import banner shown when `authGooglePicture` set and no photo | banner rendered |
-| Google import banner hidden when user already has a photo | banner not rendered |
+| Google import banner not shown when user already has a photo | banner not rendered |
 | Dismiss removes `authGooglePicture` from localStorage | key cleared |
 
 ---
@@ -236,7 +235,7 @@ Each test starts with auth pre-seeded and waits for the job table to be visible.
 > - `Modal.Title` renders as `<div class="modal-title h4">` — use `.locator(".modal-title")`
 > - Row selection: `table.getByRole("row").filter({ hasText: /.../ }).click()` then click toolbar button
 > - Confirm delete button: `{ name: "Delete", exact: true }` to avoid matching the toolbar button
-> - `Form.Group` has no `controlId` — select text inputs by `nth()` index (Date=0, Role=1, Company=2)
+> - `Form.Group` has no `controlId` — select text inputs by `nth()` index (Date=0, Company=1, Role=2)
 
 ### `navigation.spec.js` — 6 tests
 

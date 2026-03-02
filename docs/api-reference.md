@@ -43,7 +43,7 @@ Authenticate with email/password.
 
 | Status | Body |
 |--------|------|
-| 200 | `{ "token": "<jwt>", "user": { "id": 1, "username": "...", "role": "contributor", "display_name": null, "photo": null, "has_password": true } }` |
+| 200 | `{ "token": "<jwt>", "user": { "id": 1, "username": "...", "role": "user", "display_name": null, "photo": null, "resume_link": null, "has_password": true } }` |
 | 400 | `{ "error": "..." }` — missing fields |
 | 401 | `{ "error": "Invalid credentials" }` |
 
@@ -64,10 +64,10 @@ Exchange a Google credential (ID token from the frontend's `GoogleLogin` button)
 
 | Status | Body |
 |--------|------|
-| 200 | `{ "token": "<jwt>", "user": { "id": 1, "username": "...", "role": "contributor", "display_name": null, "photo": null, "has_password": false }, "google_picture": "<url-or-null>" }` |
+| 200 | `{ "token": "<jwt>", "user": { "id": 1, "username": "...", "role": "user", "display_name": null, "photo": null, "resume_link": null, "has_password": false }, "google_picture": "<url-or-null>" }` |
 | 401 | `{ "error": "Google sign-in failed" }` |
 
-New Google users are created automatically with role `contributor`. If `ADMIN_EMAIL` matches the Google account, the role is set to `admin` at creation time. `google_picture` is the Google-hosted avatar URL from the ID token payload; the frontend stores it in `localStorage` (`authGooglePicture`) and offers a one-time import prompt on the Profile page if the user has no photo yet.
+New Google users are created automatically with role `user`. If `ADMIN_EMAIL` matches the Google account, the role is set to `admin` at creation time. `google_picture` is the Google-hosted avatar URL from the ID token payload; the frontend stores it in `localStorage` (`authGooglePicture`) and offers a one-time import prompt on the Profile page if the user has no photo yet.
 
 ---
 
@@ -91,14 +91,14 @@ Return the current user's profile (re-read from DB).
 
 | Status | Body |
 |--------|------|
-| 200 | `{ "id": 1, "username": "...", "role": "contributor", "display_name": null, "photo": null, "has_password": true }` |
+| 200 | `{ "id": 1, "username": "...", "role": "user", "display_name": null, "photo": null, "resume_link": null, "has_password": true }` |
 | 401 | Missing or invalid token |
 
 ---
 
 ### `PUT /api/auth/profile`
 
-Update the current user's display name, photo, and/or password. All fields are optional; include only what you want to change.
+Update the current user's display name, photo, resume link, and/or password. All fields are optional; include only what you want to change.
 
 **Auth**: Required (any role)
 
@@ -107,6 +107,7 @@ Update the current user's display name, photo, and/or password. All fields are o
 {
   "display_name": "Jane Smith",
   "photo": "data:image/jpeg;base64,...",
+  "resume_link": "https://drive.google.com/file/d/...",
   "google_picture_url": "https://lh3.googleusercontent.com/...",
   "current_password": "oldpass",
   "new_password": "newpass123"
@@ -114,6 +115,7 @@ Update the current user's display name, photo, and/or password. All fields are o
 ```
 
 - `photo` — base64 data URL (max 300 KB string length). Provide `null` to remove.
+- `resume_link` — URL to the user's current resume (must start with `http://` or `https://`; max 2000 chars). Provide `null` to remove.
 - `google_picture_url` — alternative to `photo`; the server fetches the image from `*.googleusercontent.com` and stores it as base64. Host is validated; other origins are rejected.
 - `current_password` — required when changing password **and** the account already has a password hash. Omit for Google-only accounts (empty password hash) setting a password for the first time.
 - `new_password` — 8–128 characters.
@@ -122,8 +124,8 @@ Update the current user's display name, photo, and/or password. All fields are o
 
 | Status | Body |
 |--------|------|
-| 200 | Updated user object (`id`, `username`, `role`, `display_name`, `photo`, `has_password`) |
-| 400 | Validation error (missing current password, password length, invalid photo, no fields given) |
+| 200 | Updated user object (`id`, `username`, `role`, `display_name`, `photo`, `resume_link`, `has_password`) |
+| 400 | Validation error (missing current password, password length, invalid photo, invalid resume_link, no fields given) |
 | 401 | Wrong current password |
 | 502 | Could not fetch photo from Google |
 
@@ -195,10 +197,10 @@ The frontend uses space-delimited field names; the database uses snake_case. The
 |----------------|-----------|------|-------|
 | `id` | `id` | integer | Auto-assigned |
 | `Date` | `date` | string | Format: `MM/DD/YYYY` |
-| `Role` | `role` | string | Max 200 chars |
 | `Company` | `company` | string | Max 200 chars |
-| `Source Link` | `source_link` | string | Must start with `http://` or `https://`; max 2000 chars |
-| `Company Link` | `company_link` | string | Must start with `http://` or `https://`; max 2000 chars |
+| `Role` | `role` | string | Max 200 chars |
+| `Job Board Link` | `job_board_link` | string | Must start with `http://` or `https://`; max 2000 chars |
+| `Direct Company Job Link` | `company_link` | string | Must start with `http://` or `https://`; max 2000 chars |
 | `Resume` | `resume` | boolean | Stored as 0/1 |
 | `Cover Letter` | `cover_letter` | boolean | Stored as 0/1 |
 | `Status` | `status` | string | Default `Applied` |
@@ -222,7 +224,7 @@ Return all users (passwords excluded).
 
 Change a user's role.
 
-**Body**: `{ "role": "admin" }` or `{ "role": "contributor" }`
+**Body**: `{ "role": "admin" }` or `{ "role": "user" }`
 
 **Responses**
 
