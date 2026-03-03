@@ -139,8 +139,9 @@ router.post("/login", async (req, res) => {
     { algorithm: "HS256", expiresIn: "8h" }
   );
 
+  const fullUser = findUserById(user.id);
   log("USER_LOGIN", { email: user.username, source: "password" });
-  return res.json({ token, user: serializeUser(user) });
+  return res.json({ token, user: serializeUser(fullUser) });
 });
 
 // POST /api/auth/google

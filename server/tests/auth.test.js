@@ -95,6 +95,22 @@ describe("POST /api/auth/login", () => {
     expect(res.body.user.password).toBeUndefined();
   });
 
+  test("200 — login response includes resume_link and linkedin_url", async () => {
+    const user = createUser({ username: "links@example.com", password: "correct-password-1!" });
+    const token = authHeader(user).Authorization.replace("Bearer ", "");
+    await request(app)
+      .put("/api/auth/profile")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ resume_link: "https://example.com/resume", linkedin_url: "https://www.linkedin.com/in/test" });
+
+    const res = await request(app)
+      .post("/api/auth/login")
+      .send({ username: "links@example.com", password: "correct-password-1!" });
+    expect(res.status).toBe(200);
+    expect(res.body.user.resume_link).toBe("https://example.com/resume");
+    expect(res.body.user.linkedin_url).toBe("https://www.linkedin.com/in/test");
+  });
+
   test("401 — wrong password", async () => {
     const res = await request(app)
       .post("/api/auth/login")
