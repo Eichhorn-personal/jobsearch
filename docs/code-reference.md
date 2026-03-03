@@ -23,7 +23,7 @@ Defines all routes and layout wrappers.
 
 **`AdminRoute`** — redirects to `/#/login` if unauthenticated; redirects to `/#/` if authenticated but not admin.
 
-**`SiteAdminRoute`** — redirects to `/#/login` if unauthenticated; redirects to `/#/` if the logged-in user's username is not `ceichhorn@gmail.com`.
+**`SiteAdminRoute`** — redirects to `/#/login` if unauthenticated; redirects to `/#/` if the logged-in user does not have `is_site_admin: true` (set by the server based on `ADMIN_EMAIL`).
 
 ### `PageLayout`
 
@@ -93,7 +93,7 @@ Top navigation bar. Rendered inside `PageLayout` on all authenticated pages.
   - A circular `<img>` of `user.photo` if a photo is stored, otherwise a letter-avatar `<span>` with the first character of the username
   - Dropdown header shows `user.display_name` if set, otherwise `user.username`
   - Admin users see a **Manage** button linking to `/#/admin`
-  - Users whose username is `ceichhorn@gmail.com` also see an **Admin** link in the dropdown linking to `/#/site-admin`
+  - Site admin users (`is_site_admin: true`) also see an **Admin** link in the dropdown linking to `/#/site-admin`
   - All users see **Edit Profile** (links to `/#/profile`) and **Sign out**
 - `aria-label="Main navigation"` on the `<nav>` element
 
@@ -206,7 +206,7 @@ Admin-only management console. Accessible at `/#/admin`.
 
 ### `SiteAdminPage` — `src/pages/SiteAdminPage.js`
 
-Site-admin console. Accessible at `/#/site-admin`. Only the user with username `ceichhorn@gmail.com` can access it; all others are redirected to `/#/`.
+Site-admin console. Accessible at `/#/site-admin`. Only the site admin user (`is_site_admin: true`, determined server-side from `ADMIN_EMAIL`) can access it; all others are redirected to `/#/`.
 
 Sections:
 1. **Users** — table of all users; role dropdown (saves on change); delete button (confirms, cascades to jobs; cannot delete own account)

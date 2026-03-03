@@ -89,9 +89,9 @@ describe("Header — role-based menu items", () => {
     );
   });
 
-  test("ceichhorn@gmail.com sees Admin link in dropdown", async () => {
-    renderHeader({ id: 1, username: "ceichhorn@gmail.com", role: "admin" });
-    userEvent.click(screen.getByLabelText(/account menu for ceichhorn@gmail\.com/i));
+  test("site admin user sees Admin link in dropdown", async () => {
+    renderHeader({ id: 1, username: "siteadmin@example.com", role: "admin", is_site_admin: true });
+    userEvent.click(screen.getByLabelText(/account menu for siteadmin@example\.com/i));
     await waitFor(() =>
       expect(screen.getByText(/^admin$/i)).toBeInTheDocument()
     );

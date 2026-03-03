@@ -80,7 +80,7 @@ jobtracker/
 │   │   ├── LoginPage.js           # Email/password + Google OAuth login and register
 │   │   ├── LoginPage.test.js      # Heading, mode toggle, error display, accessibility
 │   │   ├── AdminPage.js           # Dropdown options management (add/rename/reorder/delete)
-│   │   ├── SiteAdminPage.js       # User management, data export, logs link (ceichhorn@gmail.com only)
+│   │   ├── SiteAdminPage.js       # User management, data export, logs link (site admin only)
 │   │   ├── LogsPage.js            # Activity log viewer (newest-first)
 │   │   └── ProfilePage.js         # Edit display name, photo (upload or Google import), resume link, password
 │   │

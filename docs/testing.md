@@ -119,8 +119,8 @@ The tests import the Express `app` directly (from `server/app.js`) and use Super
 | Admin visits `/#/logs` | LogsPage renders |
 | Regular user visits `/#/site-admin` | redirected to `/` |
 | Unauthenticated visits `/#/site-admin` | redirected to `/login` |
-| Admin (non-ceichhorn) visits `/#/site-admin` | redirected to `/` |
-| `ceichhorn@gmail.com` visits `/#/site-admin` | SiteAdminPage renders |
+| Admin without `is_site_admin` visits `/#/site-admin` | redirected to `/` |
+| Site admin user (`is_site_admin: true`) visits `/#/site-admin` | SiteAdminPage renders |
 
 ### `DataTable.test.js` — 8 tests
 
@@ -161,7 +161,7 @@ The tests import the Express `app` directly (from `server/app.js`) and use Super
 | User with photo renders `<img>` avatar instead of letter span | photo takes priority |
 | Dropdown header shows display_name when set | display_name replaces username |
 | Edit Profile item present in dropdown | links to /profile |
-| `ceichhorn@gmail.com` sees Admin link in dropdown | site-admin link present |
+| Site admin user sees Admin link in dropdown | site-admin link present |
 | Other admin does not see Admin link | site-admin link absent |
 
 ### `ProfilePage.test.js` — 13 tests

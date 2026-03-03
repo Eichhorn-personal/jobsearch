@@ -11,7 +11,7 @@ export default function SiteAdminPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user && user.username !== "ceichhorn@gmail.com") navigate("/");
+    if (user && !user.is_site_admin) navigate("/");
   }, [user, navigate]);
 
   const [users, setUsers] = useState(null);

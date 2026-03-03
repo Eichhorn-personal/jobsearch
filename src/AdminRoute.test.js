@@ -24,7 +24,7 @@ jest.mock("@react-oauth/google", () => ({
 
 const adminUser = { id: 1, username: "admin@example.com", role: "admin" };
 const regularUser = { id: 2, username: "user@example.com", role: "user" };
-const siteAdminUser = { id: 3, username: "ceichhorn@gmail.com", role: "admin" };
+const siteAdminUser = { id: 3, username: "siteadmin@example.com", role: "admin", is_site_admin: true };
 
 function renderApp(initialEntry, user = null) {
   if (user) {
@@ -111,7 +111,7 @@ describe("SiteAdminRoute /site-admin", () => {
     expect(screen.queryByTestId("site-admin-page")).not.toBeInTheDocument();
   });
 
-  test("ceichhorn@gmail.com sees SiteAdminPage", () => {
+  test("site admin user sees SiteAdminPage", () => {
     renderApp("/site-admin", siteAdminUser);
     expect(screen.getByTestId("site-admin-page")).toBeInTheDocument();
   });

@@ -26,7 +26,7 @@ function AdminRoute({ children }) {
 function SiteAdminRoute({ children }) {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
-  if (user.username !== "ceichhorn@gmail.com") return <Navigate to="/" replace />;
+  if (!user.is_site_admin) return <Navigate to="/" replace />;
   return children;
 }
 

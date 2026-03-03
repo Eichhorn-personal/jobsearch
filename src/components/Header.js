@@ -83,7 +83,7 @@ export default function Header() {
                 {user.display_name || user.username}
               </NavDropdown.Header>
               <NavDropdown.Item onClick={() => navigate("/profile")}>Edit Profile</NavDropdown.Item>
-              {user.username === "ceichhorn@gmail.com" && (
+              {user.is_site_admin && (
                 <>
                   <NavDropdown.Divider />
                   <NavDropdown.Item onClick={() => navigate("/site-admin")}>Admin</NavDropdown.Item>

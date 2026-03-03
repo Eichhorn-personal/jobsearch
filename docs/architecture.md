@@ -36,7 +36,7 @@ All routes are hash-based (`/#/path`) because the app is hosted on GitHub Pages 
 | `/#/admin` | `AdminPage` | `AdminRoute` (role = `admin`) |
 | `/#/logs` | `LogsPage` | `AdminRoute` (role = `admin`) |
 | `/#/profile` | `ProfilePage` | `ProtectedRoute` (any logged-in user) |
-| `/#/site-admin` | `SiteAdminPage` | `SiteAdminRoute` (username = `ceichhorn@gmail.com`) |
+| `/#/site-admin` | `SiteAdminPage` | `SiteAdminRoute` (`is_site_admin` flag from server) |
 
 ## Backend
 

@@ -132,8 +132,8 @@
 | Admin user visits `/logs` | LogsPage renders |
 | Regular user visits `/site-admin` | redirected to `/` |
 | Unauthenticated user visits `/site-admin` | redirected to `/login` |
-| Admin (non-ceichhorn) visits `/site-admin` | redirected to `/` |
-| `ceichhorn@gmail.com` visits `/site-admin` | SiteAdminPage renders |
+| Admin without `is_site_admin` visits `/site-admin` | redirected to `/` |
+| Site admin user (`is_site_admin: true`) visits `/site-admin` | SiteAdminPage renders |
 
 ### DataTable (`DataTable.test.js`)
 
@@ -174,7 +174,7 @@
 | User with photo shows `<img>` avatar | letter span replaced by img |
 | Dropdown header shows display_name when set | display_name rendered, not username |
 | Edit Profile item links to /profile | present in dropdown |
-| `ceichhorn@gmail.com` sees Admin link in dropdown | site-admin link present |
+| Site admin user sees Admin link in dropdown | site-admin link present |
 | Other admin does not see Admin link | site-admin link absent |
 
 ### ProfilePage (`ProfilePage.test.js`)
