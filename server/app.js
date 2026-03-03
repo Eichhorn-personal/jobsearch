@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
+const { log } = require("./logger");
 
 const authRoutes = require("./routes/auth");
 const jobRoutes = require("./routes/jobs");
@@ -12,16 +13,40 @@ const scrapeRoutes = require("./routes/scrape");
 
 const app = express();
 
+// Trust the first proxy (Fly.io) so req.ip and rate-limiting work correctly
+app.set("trust proxy", 1);
+
 app.use(helmet());
 
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:3000").split(",").map(s => s.trim());
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin || allowedOrigins.includes(origin)) cb(null, true);
-    else cb(new Error("Not allowed by CORS"));
+    else {
+      log("CORS_REJECTED", { origin: origin || "(none)" });
+      cb(new Error("Not allowed by CORS"));
+    }
   },
 }));
 app.use(express.json({ limit: "512kb" }));
+
+// Access log — fires after every response (skip noisy health checks)
+app.use((req, res, next) => {
+  if (req.path === "/api/health") return next();
+  const start = Date.now();
+  res.on("finish", () => {
+    const fields = {
+      method: req.method,
+      path: req.path,
+      status: res.statusCode,
+      duration: `${Date.now() - start}ms`,
+      ip: req.ip || "-",
+    };
+    if (req.user) fields.user = req.user.username;
+    log("ACCESS", fields);
+  });
+  next();
+});
 
 if (process.env.NODE_ENV !== "test") {
   const authLimiter = rateLimit({
@@ -29,7 +54,10 @@ if (process.env.NODE_ENV !== "test") {
     max: 10,
     standardHeaders: true,
     legacyHeaders: false,
-    message: { error: "Too many attempts, please try again later" },
+    handler: (req, res) => {
+      log("RATE_LIMITED", { path: req.path, ip: req.ip || "-" });
+      res.status(429).json({ error: "Too many attempts, please try again later" });
+    },
   });
   app.use("/api/auth/login", authLimiter);
   app.use("/api/auth/register", authLimiter);
@@ -43,8 +71,8 @@ app.use("/api/logs", logRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/scrape", scrapeRoutes);
 
-app.use((err, _req, res, _next) => {
-  console.error(`[${new Date().toISOString()}] UNHANDLED_ERROR message="${err.message}"\n${err.stack}`);
+app.use((err, req, res, _next) => {
+  log("UNHANDLED_ERROR", { method: req.method, path: req.path, error: err.message });
   res.status(500).json({ error: "Internal server error" });
 });
 

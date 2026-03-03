@@ -1,18 +1,24 @@
 require("dotenv").config({ path: require("path").join(__dirname, ".env") });
 
+const { log } = require("./logger");
 const app = require("./app");
 
 const PORT = process.env.PORT || 3001;
 
+process.on("uncaughtException", (err) => {
+  log("UNCAUGHT_EXCEPTION", { error: err.message, stack: err.stack });
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (reason) => {
+  log("UNHANDLED_REJECTION", { reason: String(reason) });
+});
+
 const server = app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  log("SERVER_START", { port: PORT });
 });
 
 server.on("error", (err) => {
-  if (err.code === "EADDRINUSE") {
-    console.error(`Port ${PORT} is already in use. Kill the existing process and retry.`);
-  } else {
-    console.error("Server error:", err);
-  }
+  log("SERVER_ERROR", { error: err.code === "EADDRINUSE" ? `Port ${PORT} is already in use` : err.message });
   process.exit(1);
 });
