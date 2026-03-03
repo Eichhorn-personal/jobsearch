@@ -153,3 +153,64 @@ describe("DataTable — delete confirmation", () => {
     );
   });
 });
+
+// ── column sort ───────────────────────────────────────────────────────────────
+
+describe("DataTable — column sort", () => {
+  test("Date column header has aria-sort='descending' by default", async () => {
+    renderDataTable();
+    await act(async () => {});
+    const dateHeader = screen.getAllByRole("columnheader")[0];
+    expect(dateHeader).toHaveAttribute("aria-sort", "descending");
+  });
+
+  test("other column headers have aria-sort='none' by default", async () => {
+    renderDataTable();
+    await act(async () => {});
+    const headers = screen.getAllByRole("columnheader");
+    // Role, Company, Status — indices 1-3
+    headers.slice(1).forEach(h => expect(h).toHaveAttribute("aria-sort", "none"));
+  });
+
+  test("clicking Date header toggles to ascending", async () => {
+    renderDataTable();
+    await act(async () => {});
+    const dateHeader = screen.getAllByRole("columnheader")[0];
+    userEvent.click(dateHeader.querySelector("button"));
+    expect(dateHeader).toHaveAttribute("aria-sort", "ascending");
+  });
+
+  test("clicking Date header twice returns to descending", async () => {
+    renderDataTable();
+    await act(async () => {});
+    const dateHeader = screen.getAllByRole("columnheader")[0];
+    userEvent.click(dateHeader.querySelector("button"));
+    userEvent.click(dateHeader.querySelector("button"));
+    expect(dateHeader).toHaveAttribute("aria-sort", "descending");
+  });
+
+  test("clicking a different column sets it to ascending and clears Date sort", async () => {
+    renderDataTable();
+    await act(async () => {});
+    const headers = screen.getAllByRole("columnheader");
+    const roleHeader = headers[1]; // Role
+    userEvent.click(roleHeader.querySelector("button"));
+    expect(roleHeader).toHaveAttribute("aria-sort", "ascending");
+    expect(headers[0]).toHaveAttribute("aria-sort", "none"); // Date cleared
+  });
+
+  test("rows are ordered by date descending by default (newer date first)", async () => {
+    const twoActiveJobs = [
+      { id: 1, Role: "Engineer", Company: "Acme",   Date: "01/15/2025", Status: "Applied" },
+      { id: 2, Role: "Designer", Company: "Globex", Date: "02/20/2025", Status: "Applied" },
+    ];
+    renderDataTable(twoActiveJobs);
+    await act(async () => {});
+    const dataRows = screen
+      .getAllByRole("row")
+      .filter(r => r.getAttribute("aria-selected") !== null);
+    // Mobile cards come first in DOM; Designer has newer date (02/20) → should be first
+    expect(dataRows[0]).toHaveTextContent("Designer");
+    expect(dataRows[1]).toHaveTextContent("Engineer");
+  });
+});

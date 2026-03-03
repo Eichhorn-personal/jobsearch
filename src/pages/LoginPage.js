@@ -117,7 +117,7 @@ export default function LoginPage() {
           {/* Header */}
           <div className="text-center mb-4">
             <img src={iconSrc} alt="" width={48} height={48} style={{ borderRadius: 10, marginBottom: 12 }} />
-            <h1 style={{ fontSize: 20, fontWeight: 400, color: "#202124", margin: "0 0 4px" }}>
+            <h1 style={{ fontSize: 20, fontWeight: 400, margin: "0 0 4px" }}>
               {mode === "login" ? "Sign in" : "Create account"}
             </h1>
             <p className="text-muted small mb-0">to continue to JobTracker</p>

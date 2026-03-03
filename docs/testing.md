@@ -5,7 +5,7 @@ Three test layers cover the full stack:
 | Layer | Tool | Count | Command |
 |-------|------|-------|---------|
 | Backend API | Jest + Supertest | 98 tests | `cd server && npm test` |
-| Frontend components | Jest + React Testing Library | 57 tests | `npm test` |
+| Frontend components | Jest + React Testing Library | 147 tests | `npm test` |
 | End-to-end | Playwright | 44 tests | `npm run test:e2e` |
 
 Run all three suites together with a timestamped log:
@@ -122,7 +122,7 @@ The tests import the Express `app` directly (from `server/app.js`) and use Super
 | Admin without `is_site_admin` visits `/#/site-admin` | redirected to `/` |
 | Site admin user (`is_site_admin: true`) visits `/#/site-admin` | SiteAdminPage renders |
 
-### `DataTable.test.js` — 8 tests
+### `DataTable.test.js` — 14 tests
 
 | Test | What it verifies |
 |------|-----------------|
@@ -134,6 +134,12 @@ The tests import the Express `app` directly (from `server/app.js`) and use Super
 | Click delete toolbar button → confirmation dialog appears | dialog rendered |
 | Confirm dialog has `aria-labelledby="confirm-delete-title"` | accessible modal |
 | Confirm delete → row removed from table | row no longer in DOM |
+| Date header has `aria-sort="descending"` by default | default sort state |
+| Other headers have `aria-sort="none"` by default | only active column is marked |
+| Clicking Date header sets `aria-sort="ascending"` | sort toggles on click |
+| Clicking Date header twice returns to `"descending"` | toggle cycles both directions |
+| Clicking a different column sets it to ascending, clears Date | active column switches |
+| Rows ordered by date descending (newer date first) | sort actually reorders rows |
 
 ### `AddJobModal.test.js` — 9 tests
 
@@ -181,6 +187,38 @@ The tests import the Express `app` directly (from `server/app.js`) and use Super
 | Google import banner shown when `authGooglePicture` set and no photo | banner rendered |
 | Google import banner not shown when user already has a photo | banner not rendered |
 | Dismiss removes `authGooglePicture` from localStorage | key cleared |
+
+### `dateFormat.test.js` — 19 tests
+
+Pure unit tests for `formatDate` and `cleanJobUrl` in `src/utils/dateFormat.js`.
+
+**`formatDate` (15)**: null/undefined/empty → `""`; MM/DD/YYYY passthrough; hyphen separators; single-digit padding; MM/DD infers current year; two-digit year < 50 → 2000+; two-digit year ≥ 50 → 1900+; invalid month > 12 (non-padded) → `null`; invalid month 0 → `null`; invalid day > 31 → `null`; invalid day 0 → `null`; trailing slash (incomplete) → `null`; single part → `null`.
+
+> Note: zero-padded `MM/DD/YYYY` input passes through as-is without range validation — the validation branch only runs on non-zero-padded input.
+
+**`cleanJobUrl` (11)**: null/empty/non-URL unchanged; fragment stripped; LinkedIn strips all params; Indeed keeps `jk`, strips tracking; Glassdoor strips all params; ZipRecruiter keeps `job`; Greenhouse keeps `for`+`token`, strips `gh_src`; unknown domain strips UTM and `trk` params while preserving custom params; URL with no params unchanged.
+
+### `atsDetect.test.js` — 27 tests
+
+Pure unit tests for `detectAts` in `src/utils/atsDetect.js`.
+
+**Known ATS platforms (22)**: one canonical URL per pattern — Workday (both `myworkday.com` and `myworkdayjobs.com`), Greenhouse, Lever, Ashby (both `ashby.hr` and `ashbyhq.com`), iCIMS, Taleo, BambooHR, SmartRecruiters, Rippling, JazzHR (both `jazz.co` and `jazzhr.com`), Workable, Jobvite, SAP SuccessFactors (both `.com` and `.eu`), UKG (both `ultipro.com` and `ukg.com`), Paylocity, Recruitee, Breezy.
+
+**Subdomain matching (3)**: Workday company subdomain, Greenhouse boards subdomain, Lever jobs subdomain.
+
+**Edge cases (5)**: unrecognized domain → `null`; `null` → `null`; empty string → `null`; invalid URL string → `null`; plain domain without scheme → `null`.
+
+### `statusColor.test.js` — 24 tests
+
+Pure unit tests for `statusClass` and `STATUS_COLORS` in `src/utils/statusColor.js`.
+
+**`statusClass` — pattern matching (15)**: applied/apply, phone/screening, interview/technical interview, offer/job offer, rejected/reject, withdrawn/withdraw → correct CSS class for each.
+
+**`statusClass` — default fallback (4)**: unrecognized status, empty string, `null`, `undefined` → `"status-default"`.
+
+**`statusClass` — case insensitivity (3)**: APPLIED, INTERVIEW, REJECTED all match regardless of case.
+
+**`STATUS_COLORS` (3)**: first entry is `{ value: "", label: "Auto" }`; contains entries for key status classes; every entry has a non-empty label.
 
 ---
 
@@ -235,7 +273,7 @@ Each test starts with auth pre-seeded and waits for the job table to be visible.
 > - `Modal.Title` renders as `<div class="modal-title h4">` — use `.locator(".modal-title")`
 > - Row selection: `table.getByRole("row").filter({ hasText: /.../ }).click()` then click toolbar button
 > - Confirm delete button: `{ name: "Delete", exact: true }` to avoid matching the toolbar button
-> - `Form.Group` has no `controlId` — select text inputs by `nth()` index (Date=0, Company=1, Role=2)
+> - `Form.Group` has no `controlId` — select text inputs by `nth()` index: Job Board Link(0), Date(1, disabled in add mode), Company(2), Role(3), Direct Company Job Link(4)
 
 ### `navigation.spec.js` — 6 tests
 
@@ -290,70 +328,6 @@ Uses extended job fixture: `SAMPLE_JOBS` + one Ghosted row + one Duplicate row.
 | Clearing search restores archived rows | Fill then clear; assert archived row returns |
 
 ---
-
-## Manual — `cleanJobUrl` utility
-
-`cleanJobUrl` in `src/utils/dateFormat.js` was verified by running each site's typical URL patterns through a Node.js script. No automated test exists for this utility yet.
-
-### LinkedIn
-
-| Input | Output |
-|-------|--------|
-| `.../jobs/view/4168195487/?refId=…&trackingId=…&trk=…` | `.../jobs/view/4168195487/` |
-| `.../jobs/view/4168195487/?trk=…&lipi=…` | `.../jobs/view/4168195487/` |
-| `.../jobs/view/4168195487/` | unchanged |
-
-### Indeed
-
-| Input | Output |
-|-------|--------|
-| `…/viewjob?jk=abc123&utm_source=google&utm_medium=cpc&utm_campaign=jobs` | `…/viewjob?jk=abc123` |
-| `…/viewjob?jk=abc123&from=serp&vjs=3&referer=…` | `…/viewjob?jk=abc123` |
-| `…/applystart?jk=abc123&from=vj&pos=0&sjdu=…&astse=…` | `…/applystart?jk=abc123` |
-
-### Glassdoor
-
-| Input | Output |
-|-------|--------|
-| `…/job-listing/…JV_….htm?jl=…&src=GD_JOB_AD&t=SR&guid=…` | `…/job-listing/…JV_….htm` |
-| `…/job-listing/apply/….htm?src=GD_JOB_AD&t=SR&guid=…` | `…/job-listing/apply/….htm` |
-
-### ZipRecruiter
-
-| Input | Output |
-|-------|--------|
-| `…/c/Acme/Job/Engineer?job=abc123&utm_source=google` | `…/c/Acme/Job/Engineer?job=abc123` |
-| `…/jobs/acme-12345/engineer-abcdef?utm_source=linkedin&lvk=…` | `…/jobs/acme-12345/engineer-abcdef` |
-
-### Monster
-
-| Input | Output |
-|-------|--------|
-| `…/job-openings/engineer-acme--abc123?sid=…&jvo=…&utm_source=…` | `…/job-openings/engineer-acme--abc123` |
-| `job-openings.monster.com/v2/job/abc123?mstr_dist=true&utm_source=…` | `job-openings.monster.com/v2/job/abc123` |
-
-### Dice
-
-| Input | Output |
-|-------|--------|
-| `…/job-detail/abc123?utm_source=google&trid=…` | `…/job-detail/abc123` |
-| `…/jobs/detail/Engineer/Acme/abc123?utm_source=linkedin&src=…` | `…/jobs/detail/Engineer/Acme/abc123` |
-
-### Greenhouse
-
-| Input | Output |
-|-------|--------|
-| `boards.greenhouse.io/acme/jobs/123?gh_src=…` | `boards.greenhouse.io/acme/jobs/123` |
-| `boards.greenhouse.io/acme/jobs/123?gh_src=…&utm_source=…` | `boards.greenhouse.io/acme/jobs/123` |
-| `boards.greenhouse.io/embed/job_app?for=acme&token=123&gh_src=…` | `…?for=acme&token=123` |
-
-### Unknown domains (blocklist fallback)
-
-UTM params and other known trackers are stripped; unrecognised params are preserved.
-
-| Input | Output |
-|-------|--------|
-| `jobs.acme.com/job/eng-123?utm_source=linkedin&custom_id=456` | `jobs.acme.com/job/eng-123?custom_id=456` |
 
 ---
 
