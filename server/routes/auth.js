@@ -245,7 +245,7 @@ router.get("/me", authenticate, (req, res) => {
 
 // PUT /api/auth/profile
 router.put("/profile", authenticate, async (req, res) => {
-  const { display_name, photo, resume_link, current_password, new_password, google_picture_url } = req.body;
+  const { display_name, photo, resume_link, linkedin_url, current_password, new_password, google_picture_url } = req.body;
 
   // Validate direct photo upload
   if (photo !== undefined && photo !== null) {
@@ -278,6 +278,16 @@ router.put("/profile", authenticate, async (req, res) => {
     }
     if (!/^https?:\/\//i.test(resume_link)) {
       return res.status(400).json({ error: "Resume link must start with http:// or https://" });
+    }
+  }
+
+  // Validate linkedin_url if provided
+  if (linkedin_url !== undefined && linkedin_url !== null && linkedin_url !== "") {
+    if (typeof linkedin_url !== "string" || linkedin_url.length > 2000) {
+      return res.status(400).json({ error: "LinkedIn URL must be 2000 characters or fewer" });
+    }
+    if (!/^https?:\/\//i.test(linkedin_url)) {
+      return res.status(400).json({ error: "LinkedIn URL must start with http:// or https://" });
     }
   }
 
@@ -319,6 +329,10 @@ router.put("/profile", authenticate, async (req, res) => {
   if (resume_link !== undefined) {
     updates.push("resume_link = ?");
     params.push(resume_link || null);
+  }
+  if (linkedin_url !== undefined) {
+    updates.push("linkedin_url = ?");
+    params.push(linkedin_url || null);
   }
   if (photo !== undefined) {
     updates.push("photo = ?");

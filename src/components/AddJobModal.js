@@ -229,7 +229,7 @@ export default function AddJobModal({ show, onHide, onAdd, onSave, initialData, 
                     onBlur={handleDateBlur}
                     isInvalid={dateError}
                     aria-describedby={dateError ? "date-error" : undefined}
-                    readOnly={!isEditing}
+                    disabled={!isEditing}
                   />
                   <input
                     ref={datePickerRef}

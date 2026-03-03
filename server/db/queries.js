@@ -8,13 +8,14 @@ function serializeUser(u) {
     display_name: u.display_name || null,
     photo: u.photo || null,
     resume_link: u.resume_link || null,
+    linkedin_url: u.linkedin_url || null,
     has_password: !!(u.password),
   };
 }
 
 function findUserById(id) {
   return db
-    .prepare("SELECT id, username, password, role, display_name, photo, resume_link FROM users WHERE id = ?")
+    .prepare("SELECT id, username, password, role, display_name, photo, resume_link, linkedin_url FROM users WHERE id = ?")
     .get(id);
 }
 

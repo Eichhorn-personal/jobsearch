@@ -86,6 +86,11 @@ if (!userCols.includes("resume_link")) {
   db.exec("ALTER TABLE users ADD COLUMN resume_link TEXT");
 }
 
+// Migration: add linkedin_url column to users
+if (!userCols.includes("linkedin_url")) {
+  db.exec("ALTER TABLE users ADD COLUMN linkedin_url TEXT");
+}
+
 // Migration: rename source_link to job_board_link
 const jobCols = db.pragma("table_info(jobs)").map((c) => c.name);
 if (jobCols.includes("source_link")) {

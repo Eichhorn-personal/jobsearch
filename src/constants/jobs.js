@@ -1,1 +1,1 @@
-export const ARCHIVED_STATUSES = ["ghosted", "duplicate"];
+export const ARCHIVED_STATUSES = ["ghosted", "duplicate", "rejected"];
