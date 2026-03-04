@@ -89,12 +89,15 @@ Top navigation bar. Rendered inside `PageLayout` on all authenticated pages.
 
 - Brand: `JobTracker` logo + text — links to `/#/`
 - Logo image has `alt=""` (decorative, not announced by screen readers)
-- Right side: `NavDropdown` whose toggle is:
+- **Resume/LinkedIn quick-links**: when `user.resume_link` or `user.linkedin_url` are set, rendered as `btn-toolbar-action` anchor tags. On desktop (≥576px, `d-none d-sm-flex`) they appear directly in the header bar. On mobile (<576px) they are hidden from the bar and surfaced instead as items inside the profile dropdown (`d-sm-none`), appearing after **Edit Profile**.
+- Admin users see a standalone **Manage** button in the header linking to `/#/admin`
+- Right side: `NavDropdown` toggled by the user avatar:
   - A circular `<img>` of `user.photo` if a photo is stored, otherwise a letter-avatar `<span>` with the first character of the username
   - Dropdown header shows `user.display_name` if set, otherwise `user.username`
-  - Admin users see a **Manage** button linking to `/#/admin`
-  - Site admin users (`is_site_admin: true`) also see an **Admin** link in the dropdown linking to `/#/site-admin`
-  - All users see **Edit Profile** (links to `/#/profile`) and **Sign out**
+  - **Edit Profile** (links to `/#/profile`)
+  - **My Resume** / **My LinkedIn** — only rendered when the user has those profile fields set; only visible on mobile (`d-sm-none`)
+  - Site admin users (`is_site_admin: true`) also see an **Admin** link linking to `/#/site-admin`
+  - **Sign out**
 - `aria-label="Main navigation"` on the `<nav>` element
 
 ---
@@ -111,7 +114,9 @@ Main job-tracking table.
 
 **Columns**: Date (115 px fixed), Role (flex), Company (flex), Status (130 px fixed).
 
-**Row split**: Rows with `Status = "Ghosted"` or `"Duplicate"` (case-insensitive) are separated into an **Archived** section below the main table. The archived section is collapsed by default and toggled with a chevron button.
+**Layout**: On desktop (md+, ≥768px) renders a scrollable `sheet-scroll` table. On mobile (<768px) renders a `.job-cards` card list where each card shows the Role, Company, a colored status chip, and Date. Cards are edge-to-edge (the outer `Container` removes horizontal padding below `md`; the toolbar restores its own `px-3 px-md-0` padding).
+
+**Row split**: Rows with `Status = "Ghosted"`, `"Duplicate"`, or `"Rejected"` (case-insensitive, defined in `src/constants/jobs.js`) are separated into an **Archived** section below the main table. The archived section is collapsed by default and toggled with a chevron button.
 
 **Search**: A pill-shaped search box filters both the main and archived tables simultaneously by Role or Company substring (case-insensitive). Filtered rows are not rendered.
 
@@ -217,7 +222,21 @@ Sections:
 
 ### `LogsPage` — `src/pages/LogsPage.js`
 
-Admin-only activity log viewer. Accessible at `/#/logs`. Displays log entries newest-first with all key=value pairs rendered as small uniform tags. The `id` field is excluded from display.
+Admin-only activity log viewer. Accessible at `/#/logs`.
+
+**Layout**: On mobile (<768px) renders `.log-cards` cards; on desktop renders a `sheet-scroll sheet-scroll--limited` table capped at `70vh` with a sticky header.
+
+**Mobile card** (`.log-card`): event chip (colored via `EVENT_CHIP` map) on the left, timestamp on the right, key=value detail pairs below. The `id` field is excluded from display.
+
+**Desktop table columns**: Time (190 px, sortable), Event (140 px), Details (flex). The Time column header toggles sort direction; defaults to newest-first.
+
+**Toolbar**:
+- **Back** — icon-only chevron-left SVG (`aria-label="Back to admin"`); navigates to `/#/admin`
+- **Search** — filters entries by event type, timestamp text, or any detail value (case-insensitive)
+- **Filter select** — narrows to a single event type or shows all
+- **Refresh** — icon-only circular-arrow SVG (`aria-label="Refresh"`); re-fetches `/api/logs`
+
+**`EVENT_CHIP` map**: maps event name to chip color class — `JOB_CREATED` → `event-success`, `JOB_UPDATED` → `event-warning`, `JOB_DELETED` → `event-danger`, `USER_CREATED` → `event-primary`, `USER_LOGIN` → `event-info`, `USER_LOGOUT` → `event-secondary`.
 
 ---
 

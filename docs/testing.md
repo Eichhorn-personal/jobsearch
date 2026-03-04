@@ -5,7 +5,7 @@ Three test layers cover the full stack:
 | Layer | Tool | Count | Command |
 |-------|------|-------|---------|
 | Backend API | Jest + Supertest | 98 tests | `cd server && npm test` |
-| Frontend components | Jest + React Testing Library | 147 tests | `npm test` |
+| Frontend components | Jest + React Testing Library | 172 tests | `npm test` |
 | End-to-end | Playwright | 44 tests | `npm run test:e2e` |
 
 Run all three suites together with a timestamped log:
@@ -122,7 +122,7 @@ The tests import the Express `app` directly (from `server/app.js`) and use Super
 | Admin without `is_site_admin` visits `/#/site-admin` | redirected to `/` |
 | Site admin user (`is_site_admin: true`) visits `/#/site-admin` | SiteAdminPage renders |
 
-### `DataTable.test.js` — 14 tests
+### `DataTable.test.js` — 16 tests
 
 | Test | What it verifies |
 |------|-----------------|
@@ -140,6 +140,8 @@ The tests import the Express `app` directly (from `server/app.js`) and use Super
 | Clicking Date header twice returns to `"descending"` | toggle cycles both directions |
 | Clicking a different column sets it to ascending, clears Date | active column switches |
 | Rows ordered by date descending (newer date first) | sort actually reorders rows |
+| Each active card contains a `.status-chip` element | mobile card renders status chip |
+| Active cards show the correct job role text | mobile card renders role |
 
 ### `AddJobModal.test.js` — 9 tests
 
@@ -155,7 +157,7 @@ The tests import the Express `app` directly (from `server/app.js`) and use Super
 | Edit mode title says "Edit Job" | mode detection |
 | Edit mode submit button says "Save Changes" | mode detection |
 
-### `Header.test.js` — 10 tests
+### `Header.test.js` — 15 tests
 
 | Test | What it verifies |
 |------|-----------------|
@@ -169,6 +171,11 @@ The tests import the Express `app` directly (from `server/app.js`) and use Super
 | Edit Profile item present in dropdown | links to /profile |
 | Site admin user sees Admin link in dropdown | site-admin link present |
 | Other admin does not see Admin link | site-admin link absent |
+| User with `resume_link` has My Resume links in DOM | both header link and dropdown item present |
+| User with `linkedin_url` has My LinkedIn links in DOM | both header link and dropdown item present |
+| User without `resume_link` has no My Resume link | link absent when field unset |
+| User without `linkedin_url` has no My LinkedIn link | link absent when field unset |
+| Dropdown contains My Resume item when user has `resume_link` | ≥2 links when dropdown opens (header + menu) |
 
 ### `ProfilePage.test.js` — 13 tests
 
@@ -187,6 +194,29 @@ The tests import the Express `app` directly (from `server/app.js`) and use Super
 | Google import banner shown when `authGooglePicture` set and no photo | banner rendered |
 | Google import banner not shown when user already has a photo | banner not rendered |
 | Dismiss removes `authGooglePicture` from localStorage | key cleared |
+
+### `LogsPage.test.js` — 18 tests
+
+| Test | What it verifies |
+|------|-----------------|
+| Shows "Activity Log" title | heading present after load |
+| Renders desktop table with `aria-label="Activity log entries"` | ARIA table structure |
+| Shows event chips for each entry | `JOB_CREATED`, `USER_LOGIN` chips present |
+| Shows entry detail values | key=value data rendered |
+| Shows empty state when no log entries | "No log entries yet." message |
+| Back button present with `aria-label="Back to admin"` | icon-only button is accessible |
+| Refresh button present with `aria-label="Refresh"` | icon-only button is accessible |
+| Renders a `.log-card` for each log entry | mobile card count matches entries |
+| Each mobile card contains a `.status-chip` | event chip in card |
+| Each mobile card shows a timestamp in `.log-card-time` | time element non-empty |
+| Time header defaults to `aria-sort="descending"` | default sort state |
+| Clicking Time header toggles to ascending | sort direction toggles |
+| Clicking Time header twice returns to descending | toggle cycles both directions |
+| Filtering by event type hides non-matching entry details | filter removes entries |
+| Clearing filter restores all entries | all entries visible after reset |
+| Searching by detail value hides non-matching entries | search filters by data content |
+| Non-matching search shows "No entries match" message | empty state after search |
+| Clicking Refresh calls the API again | Refresh triggers a new request |
 
 ### `dateFormat.test.js` — 19 tests
 

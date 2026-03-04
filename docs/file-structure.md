@@ -58,11 +58,11 @@ jobtracker/
 │   ├── DataTable.css              # Fluid table layout styles
 │   │
 │   ├── components/
-│   │   ├── Header.js              # Navbar with logo, brand link, user dropdown
-│   │   ├── Header.test.js         # ARIA structure, role-based menu items
+│   │   ├── Header.js              # Navbar: logo, resume/LinkedIn links (desktop), profile dropdown
+│   │   ├── Header.test.js         # ARIA structure, role-based menu items, profile quick-links
 │   │   ├── Footer.js              # Simple footer
-│   │   ├── DataTable.js           # Jobs table with add/edit/delete actions
-│   │   ├── DataTable.test.js      # Table ARIA, action buttons, delete confirmation
+│   │   ├── DataTable.js           # Jobs table (desktop) + card list (mobile) with add/edit/delete
+│   │   ├── DataTable.test.js      # Table ARIA, action buttons, delete confirmation, mobile cards
 │   │   ├── AddJobModal.js         # Modal form for adding and editing jobs
 │   │   └── AddJobModal.test.js    # Modal ARIA, date validation, form submission
 │   │
@@ -81,7 +81,8 @@ jobtracker/
 │   │   ├── LoginPage.test.js      # Heading, mode toggle, error display, accessibility
 │   │   ├── AdminPage.js           # Dropdown options management (add/rename/reorder/delete)
 │   │   ├── SiteAdminPage.js       # User management, data export, logs link (site admin only)
-│   │   ├── LogsPage.js            # Activity log viewer (newest-first)
+│   │   ├── LogsPage.js            # Activity log: mobile cards + desktop table, sort/filter/search
+│   │   ├── LogsPage.test.js       # Rendering, mobile cards, sort, filter, search, empty states
 │   │   └── ProfilePage.js         # Edit display name, photo (upload or Google import), resume link, password
 │   │
 │   └── utils/

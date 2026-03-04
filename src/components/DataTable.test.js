@@ -214,3 +214,34 @@ describe("DataTable — column sort", () => {
     expect(dataRows[1]).toHaveTextContent("Engineer");
   });
 });
+
+// ── mobile cards ──────────────────────────────────────────────────────────────
+
+describe("DataTable — mobile cards", () => {
+  test("each card renders a status chip", async () => {
+    renderDataTable();
+    await act(async () => {});
+    // eslint-disable-next-line testing-library/no-node-access
+    const cards = document.querySelectorAll(".job-card");
+    expect(cards.length).toBeGreaterThan(0);
+    cards.forEach(card => {
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(card.querySelector(".status-chip")).not.toBeNull();
+    });
+  });
+
+  test("active cards show the job role", async () => {
+    // Use two active (non-archived) statuses so both appear in .job-cards
+    const twoActiveJobs = [
+      { id: 1, Role: "Engineer", Company: "Acme",   Date: "01/15/2025", Status: "Applied" },
+      { id: 2, Role: "Designer", Company: "Globex", Date: "02/20/2025", Status: "Applied" },
+    ];
+    renderDataTable(twoActiveJobs);
+    await act(async () => {});
+    // eslint-disable-next-line testing-library/no-node-access
+    const cards = document.querySelectorAll(".job-card");
+    const roles = Array.from(cards).map(c => c.querySelector(".job-card-role")?.textContent);
+    expect(roles).toContain("Engineer");
+    expect(roles).toContain("Designer");
+  });
+});

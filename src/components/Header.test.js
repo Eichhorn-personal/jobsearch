@@ -106,3 +106,36 @@ describe("Header — role-based menu items", () => {
     expect(screen.queryByText(/^admin$/i)).not.toBeInTheDocument();
   });
 });
+
+// ── profile quick-links (mobile dropdown) ─────────────────────────────────────
+
+describe("Header — profile quick-links", () => {
+  test("user with resume_link sees My Resume links in DOM", () => {
+    renderHeader({ id: 1, username: "u@example.com", role: "user", resume_link: "https://example.com/resume" });
+    // Both the header link (d-none d-sm-flex) and the dropdown item (d-sm-none) are in DOM
+    expect(screen.getAllByRole("link", { name: /my resume/i }).length).toBeGreaterThanOrEqual(1);
+  });
+
+  test("user with linkedin_url sees My LinkedIn links in DOM", () => {
+    renderHeader({ id: 1, username: "u@example.com", role: "user", linkedin_url: "https://linkedin.com/in/user" });
+    expect(screen.getAllByRole("link", { name: /my linkedin/i }).length).toBeGreaterThanOrEqual(1);
+  });
+
+  test("user without resume_link does not see My Resume", () => {
+    renderHeader({ id: 1, username: "u@example.com", role: "user" });
+    expect(screen.queryByRole("link", { name: /my resume/i })).not.toBeInTheDocument();
+  });
+
+  test("user without linkedin_url does not see My LinkedIn", () => {
+    renderHeader({ id: 1, username: "u@example.com", role: "user" });
+    expect(screen.queryByRole("link", { name: /my linkedin/i })).not.toBeInTheDocument();
+  });
+
+  test("dropdown contains My Resume item when user has resume_link", async () => {
+    renderHeader({ id: 1, username: "u@example.com", role: "user", resume_link: "https://example.com/resume" });
+    userEvent.click(screen.getByLabelText(/account menu for u@example\.com/i));
+    await waitFor(() =>
+      expect(screen.getAllByRole("link", { name: /my resume/i }).length).toBeGreaterThanOrEqual(2)
+    );
+  });
+});
