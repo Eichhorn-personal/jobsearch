@@ -52,7 +52,9 @@ export default function SiteAdminPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "job-tracker-data.json";
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, "0")}.${String(today.getDate()).padStart(2, "0")}`;
+    a.download = `${dateStr}-jobtracker-data-export.json`;
     a.click();
     URL.revokeObjectURL(url);
   };

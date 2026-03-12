@@ -33,6 +33,20 @@ const parseDateVal = (str) => {
 
 const isArchived = (row) => ARCHIVED_STATUSES.includes((row.Status || "").toLowerCase());
 
+const parseJobDate = (str) => {
+  if (!str) return null;
+  const parts = str.split("/");
+  if (parts.length !== 3) return null;
+  const [m, d, y] = parts;
+  return new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
+};
+
+const isStaleJob = (row) => {
+  const date = parseJobDate(row.Date);
+  if (!date) return false;
+  return Date.now() - date.getTime() > 30 * 24 * 60 * 60 * 1000;
+};
+
 function Chevron({ open }) {
   return (
     <svg
@@ -71,7 +85,21 @@ export default function DataTable() {
   useEffect(() => {
     request("/api/jobs")
       .then(res => res.json())
-      .then(data => setRows(data))
+      .then(data => {
+        const toGhost = data.filter(r => (r.Status || "").toLowerCase() === "applied" && isStaleJob(r));
+        if (toGhost.length === 0) {
+          setRows(data);
+          return;
+        }
+        const ghostIds = new Set(toGhost.map(r => r.id));
+        setRows(data.map(r => ghostIds.has(r.id) ? { ...r, Status: "Ghosted" } : r));
+        toGhost.forEach(r =>
+          request(`/api/jobs/${r.id}`, {
+            method: "PUT",
+            body: JSON.stringify({ ...r, Status: "Ghosted" }),
+          }).catch(err => console.error(`Failed to auto-ghost job ${r.id}:`, err))
+        );
+      })
       .catch(err => console.error("Failed to load jobs:", err));
 
     request("/api/dropdowns")
