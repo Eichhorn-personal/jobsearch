@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Container, Spinner } from "react-bootstrap";
 import { useApi } from "../hooks/useApi";
@@ -53,9 +53,36 @@ export default function LogsPage() {
   const { request } = useApi();
   const navigate = useNavigate();
   const [entries, setEntries] = useState(null);
-  const [filterEvent, setFilterEvent] = useState("");
+  const [filterEvents, setFilterEvents] = useState(new Set(EVENT_TYPES));
+  const [filterOpen, setFilterOpen] = useState(false);
+  const filterRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortDir, setSortDir] = useState("desc");
+
+  useEffect(() => {
+    if (!filterOpen) return;
+    const onMouseDown = (e) => {
+      if (filterRef.current && !filterRef.current.contains(e.target)) {
+        setFilterOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
+  }, [filterOpen]);
+
+  const toggleEvent = (evt) => {
+    setFilterEvents(prev => {
+      const next = new Set(prev);
+      if (next.has(evt)) next.delete(evt);
+      else next.add(evt);
+      return next;
+    });
+  };
+
+  const allSelected = filterEvents.size === EVENT_TYPES.length;
+  const filterLabel = allSelected
+    ? "All events"
+    : `${filterEvents.size} of ${EVENT_TYPES.length}`;
 
   const load = useCallback(() => {
     request("/api/logs")
@@ -76,7 +103,7 @@ export default function LogsPage() {
   };
 
   const displayed = entries === null ? null : [...entries]
-    .filter(e => (!filterEvent || e.event === filterEvent) && matchesSearch(e))
+    .filter(e => filterEvents.has(e.event) && matchesSearch(e))
     .sort((a, b) => {
       const diff = new Date(a.timestamp) - new Date(b.timestamp);
       return sortDir === "asc" ? diff : -diff;
@@ -114,17 +141,45 @@ export default function LogsPage() {
             </button>
           )}
         </div>
-        <select
-          className="log-filter-select"
-          value={filterEvent}
-          onChange={e => setFilterEvent(e.target.value)}
-          aria-label="Filter by event type"
-        >
-          <option value="">All events</option>
-          {EVENT_TYPES.map(evt => (
-            <option key={evt} value={evt}>{evt}</option>
-          ))}
-        </select>
+        <div ref={filterRef} style={{ position: "relative" }}>
+          <button
+            className={`log-filter-btn${!allSelected ? " log-filter-btn--active" : ""}`}
+            onClick={() => setFilterOpen(o => !o)}
+            aria-haspopup="true"
+            aria-expanded={filterOpen}
+            aria-label="Filter by event type"
+          >
+            {filterLabel}
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true" style={{ marginLeft: 4, opacity: 0.6 }}>
+              <polygon points="1,3 9,3 5,8" />
+            </svg>
+          </button>
+          {filterOpen && (
+            <div className="log-filter-menu">
+              {EVENT_TYPES.map(evt => (
+                <label key={evt} className="log-filter-item">
+                  <input
+                    type="checkbox"
+                    checked={filterEvents.has(evt)}
+                    onChange={() => toggleEvent(evt)}
+                  />
+                  <span className={`status-chip ${EVENT_CHIP[evt]}`} style={{ fontSize: 11 }}>{evt}</span>
+                </label>
+              ))}
+              {!allSelected && (
+                <>
+                  <div className="log-filter-divider" />
+                  <button
+                    className="log-filter-clear"
+                    onClick={() => setFilterEvents(new Set(EVENT_TYPES))}
+                  >
+                    Select all
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
         <button className="btn-toolbar-action" onClick={load} aria-label="Refresh" style={{ padding: "6px 10px" }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <polyline points="23 4 23 10 17 10"/>

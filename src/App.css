@@ -259,10 +259,12 @@
 [data-bs-theme="dark"] .arrow-btn { color: #9aa0a6; }
 [data-bs-theme="dark"] .arrow-btn:not(:disabled):hover { color: #e8eaed; }
 
-/* ── Log filter select ───────────────────────────────────────── */
-.log-filter-select {
+/* ── Log filter dropdown (multi-select) ──────────────────────── */
+.log-filter-btn {
+  display: inline-flex;
+  align-items: center;
   height: 32px;
-  padding: 0 8px;
+  padding: 0 10px;
   border: 1px solid #dadce0;
   border-radius: 4px;
   background: #ffffff;
@@ -270,24 +272,109 @@
   font-size: 13px;
   cursor: pointer;
   outline: none;
+  white-space: nowrap;
 }
 
-.log-filter-select:hover {
+.log-filter-btn:hover {
   background: #f8f9fa;
   box-shadow: 0 1px 3px rgba(60, 64, 67, 0.2);
 }
 
-.log-filter-select:focus {
+.log-filter-btn--active {
   border-color: #1a73e8;
+  color: #1a73e8;
 }
 
-[data-bs-theme="dark"] .log-filter-select {
+.log-filter-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 210px;
+  background: #ffffff;
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(60, 64, 67, 0.18);
+  z-index: 200;
+  padding: 6px 0;
+}
+
+.log-filter-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.log-filter-item:hover {
+  background: #f8f9fa;
+}
+
+.log-filter-item input[type="checkbox"] {
+  accent-color: #1a73e8;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.log-filter-divider {
+  border: none;
+  border-top: 1px solid #e8eaed;
+  margin: 4px 0;
+}
+
+.log-filter-clear {
+  display: block;
+  width: 100%;
+  padding: 5px 12px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 13px;
+  color: #1a73e8;
+  cursor: pointer;
+}
+
+.log-filter-clear:hover {
+  background: #f8f9fa;
+}
+
+[data-bs-theme="dark"] .log-filter-btn {
   background: #2b2d30;
   color: #e8eaed;
   border-color: #5f6368;
 }
 
-[data-bs-theme="dark"] .log-filter-select:hover {
+[data-bs-theme="dark"] .log-filter-btn:hover {
+  background: #3c4043;
+}
+
+[data-bs-theme="dark"] .log-filter-btn--active {
+  border-color: #8ab4f8;
+  color: #8ab4f8;
+}
+
+[data-bs-theme="dark"] .log-filter-menu {
+  background: #2b2d30;
+  border-color: #5f6368;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+[data-bs-theme="dark"] .log-filter-item:hover {
+  background: #3c4043;
+}
+
+[data-bs-theme="dark"] .log-filter-divider {
+  border-color: #5f6368;
+}
+
+[data-bs-theme="dark"] .log-filter-clear {
+  color: #8ab4f8;
+}
+
+[data-bs-theme="dark"] .log-filter-clear:hover {
   background: #3c4043;
 }
 
