@@ -230,6 +230,19 @@ router.post("/google", async (req, res) => {
   return res.json({ token, user: serializeUser(fullUser), google_picture: payload.picture || null });
 });
 
+// POST /api/auth/refresh
+// Accepts a valid token and returns a fresh 8-hour token.
+router.post("/refresh", authenticate, (req, res) => {
+  const user = findUserById(req.user.id);
+  if (!user) return res.status(404).json({ error: "User not found" });
+  const token = jwt.sign(
+    { sub: user.id, username: user.username, role: user.role },
+    process.env.JWT_SECRET,
+    { algorithm: "HS256", expiresIn: "8h" }
+  );
+  return res.json({ token, user: serializeUser(user) });
+});
+
 // POST /api/auth/logout
 router.post("/logout", authenticate, (req, res) => {
   log("USER_LOGOUT", { email: req.user.username });
